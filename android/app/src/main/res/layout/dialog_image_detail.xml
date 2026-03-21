@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/ivDetail"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:background="@color/dark_surface"
+        android:scaleType="centerCrop" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="图片链接："
+        android:textColor="@color/dark_text_primary"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvDetailUrl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/dark_surface"
+        android:padding="12dp"
+        android:textColor="@color/dark_text_secondary"
+        android:textIsSelectable="true"
+        android:textSize="12sp" />
+
+</LinearLayout>

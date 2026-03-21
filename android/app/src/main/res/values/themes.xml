@@ -1,0 +1,47 @@
+<resources>
+    <!-- Base application theme -->
+    <style name="Theme.Acuspic" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Primary brand colors -->
+        <item name="colorPrimary">@color/accent_primary</item>
+        <item name="colorPrimaryVariant">@color/accent_primary_dark</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        
+        <!-- Secondary brand colors -->
+        <item name="colorSecondary">@color/accent_primary_light</item>
+        <item name="colorSecondaryVariant">@color/accent_primary</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+        
+        <!-- Status bar and navigation bar - 透明以支持 Edge-to-Edge -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        
+        <!-- Edge-to-Edge 支持 -->
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        
+        <!-- Background colors -->
+        <item name="android:colorBackground">@color/dark_background</item>
+        <item name="colorSurface">@color/dark_surface</item>
+        <item name="colorOnSurface">@color/dark_text_primary</item>
+        
+        <!-- Text colors -->
+        <item name="android:textColorPrimary">@color/dark_text_primary</item>
+        <item name="android:textColorSecondary">@color/dark_text_secondary</item>
+        
+        <!-- Disable default action bar -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        
+        <!-- Smooth transitions -->
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="android:windowContentTransitions">true</item>
+        
+        <!-- Splash Screen -->
+        <item name="android:windowSplashScreenBackground">@color/dark_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <item name="android:windowSplashScreenAnimationDuration">500</item>
+    </style>
+</resources>

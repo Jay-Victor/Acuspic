@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Android 16 (API 36) 兼容权限配置 -->
+    <!-- 存储权限 - 用于导入/导出 Markdown 文件 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+    
+    <!-- Android 13+ 媒体权限 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
+        android:minSdkVersion="33" />
+
+    <!-- 互联网权限（用于 Markdown 图片加载和更新检查） -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- 读取手机状态（用于判断国内/国外网络） -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    
+    <!-- 声明应用使用特性 -->
+    <uses-feature android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Acuspic"
+        android:requestLegacyExternalStorage="true"
+        android:preserveLegacyExternalStorage="true"
+        tools:targetApi="36">
+        
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            
+            <!-- Open markdown files from file manager -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/markdown" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="text/x-markdown" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+            </intent-filter>
+            
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:pathPattern=".*\\.md" />
+                <data android:pathPattern=".*\\.markdown" />
+                <data android:pathPattern=".*\\.mdown" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+            </intent-filter>
+        </activity>
+
+        <!-- 设置页面 -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="设置"
+            android:theme="@style/Theme.Acuspic" />
+
+        <!-- 版本历史页面 -->
+        <activity
+            android:name=".VersionHistoryActivity"
+            android:exported="false"
+            android:label="版本历史"
+            android:theme="@style/Theme.Acuspic" />
+
+        <!-- 关于页面 -->
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:label="关于"
+            android:theme="@style/Theme.Acuspic" />
+
+        <!-- 图床设置页面 -->
+        <activity
+            android:name=".ImageHostSettingsActivity"
+            android:exported="false"
+            android:label="图床设置"
+            android:theme="@style/Theme.Acuspic" />
+
+        <!-- 图床上传历史页面 -->
+        <activity
+            android:name=".ImageHostHistoryActivity"
+            android:exported="false"
+            android:label="上传历史"
+            android:theme="@style/Theme.Acuspic" />
+
+        <!-- FileProvider for Android 16+ 文件共享 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        
+    </application>
+
+</manifest>

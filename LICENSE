@@ -1,0 +1,210 @@
+# Acuspic 软件许可协议
+# Acuspic Software License Agreement
+
+---
+
+## 中文版本
+
+**版权所有 © 2026 Jay-Victor。保留所有权利。**
+
+**版本：1.0 | 生效日期：2026年3月21日**
+
+---
+
+### 一、软件说明
+
+Acuspic 是一款 Android 平台的 Markdown 编辑器，主要功能包括：
+- 支持 GFM、CommonMark、Original、MultiMarkdown、Markdown Extra、Pandoc 等6种 Markdown 方言
+- 集成 Gitee、GitHub、七牛、SM.MS、Imgur、自定义图床 等6种图床服务
+- 本地数据存储，无需联网即可使用核心功能
+- 双源更新系统（GitHub/Gitee）
+
+---
+
+### 二、个人使用（免费）
+
+**允许：**
+- 个人学习、研究、笔记记录
+- 学术研究和教学用途
+- 分享未修改的原版软件（需保留版权声明）
+
+**禁止：**
+- 商业用途
+- 删除或修改版权声明
+- 声称软件为自己创作
+- 将软件用于产生经济收益的活动
+
+**修改与衍生作品：**
+- 对软件进行任何修改或创作衍生作品，必须保留原作者署名和出处
+- 原作者：**Jay-Victor**，出处：**https://github.com/Jay-Victor/Acuspic** 或 **https://gitee.com/Jay-Victor/Acuspic**
+- 将修改版本或衍生作品开源，须获得原作者书面许可
+
+---
+
+### 三、商业使用授权
+
+商业使用需购买授权。商业使用包括但不限于：
+- 营利性企业内部使用
+- 用于产生经济收益的内容创作（如自媒体、付费课程）
+- 集成到商业产品或服务中
+- 为客户提供付费服务时使用
+
+**授权类型与定价：**
+
+| 类型 | 适用范围 | 月付 | 年付 | 永久授权 |
+|------|----------|------|------|----------|
+| 个人授权 | 单个个人 | ¥9 | ¥59 | ¥89 |
+| 团队授权 | 2-20人 | ¥39-99 | ¥399-999 | ¥999-2,499 |
+| 企业授权 | 21人以上 | ¥199起 | ¥1,999起 | ¥4,999起 |
+
+**特殊优惠：**
+- 教育机构、非营利组织：5折
+- 开源项目：免费（需书面申请）
+- 政府机构：7折
+
+**支付方式：** 联系后协商确定（支持支付宝、微信支付、银行转账）
+
+---
+
+### 四、联系方式
+
+| 渠道 | 信息 |
+|------|------|
+| 作者/许可方 | Jay-Victor |
+| 邮箱 | 18261738221@163.com |
+| QQ | 1061037299 |
+| QQ群 | 1091235240 |
+| GitHub | https://github.com/Jay-Victor/Acuspic |
+| Gitee | https://gitee.com/Jay-Victor/Acuspic |
+
+---
+
+### 五、免责声明
+
+1. 本软件按"原样"提供，不附带任何明示或暗示的担保。
+2. 许可方不对因使用本软件而产生的任何直接或间接损害承担责任。
+3. 用户应自行备份重要数据，许可方不对数据丢失负责。
+4. 本软件不收集用户数据，所有数据存储在用户设备本地。
+5. 使用第三方图床服务时，需遵守相应服务的隐私政策。
+6. 用户违反本协议所产生的任何后果，由用户自行承担，与许可方无关。
+7. 对于用户修改后的软件版本或衍生作品，许可方不承担任何责任，相关责任由修改者承担。
+8. 用户因使用本软件侵犯第三方权益的，由用户自行承担法律责任。
+9. 许可方保留追究用户违约责任的权利。
+
+---
+
+### 六、其他条款
+
+1. 本协议受中华人民共和国法律管辖。
+2. 未尽事宜通过上述联系方式协商解决。
+3. 中英文版本如有冲突，以中文版本为准。
+4. 使用本软件即表示同意本协议条款。
+5. 许可方有权在通知后终止违反本协议用户的许可。
+
+---
+
+**使用本软件即表示您已阅读并同意本协议条款。**
+
+---
+
+## English Version
+
+**Copyright © 2026 Jay-Victor. All rights reserved.**
+
+**Version: 1.0 | Effective Date: March 21, 2026**
+
+---
+
+### 1. Software Description
+
+Acuspic is an Android Markdown editor with the following features:
+- Support for 6 Markdown dialects: GFM, CommonMark, Original, MultiMarkdown, Markdown Extra, Pandoc
+- Integration with 6 image hosting services: Gitee, GitHub, Qiniu, SM.MS, Imgur, Custom
+- Local data storage, core features work offline
+- Dual-source update system (GitHub/Gitee)
+
+---
+
+### 2. Personal Use (Free)
+
+**Permitted:**
+- Personal learning, research, note-taking
+- Academic research and teaching
+- Sharing unmodified original software (with copyright notice preserved)
+
+**Prohibited:**
+- Commercial use
+- Removing or modifying copyright notices
+- Claiming authorship
+- Using for revenue-generating activities
+
+**Modifications & Derivative Works:**
+- Any modifications or derivative works must retain attribution to the original author and source
+- Original Author: **Jay-Victor**, Source: **https://github.com/Jay-Victor/Acuspic** or **https://gitee.com/Jay-Victor/Acuspic**
+- Open-sourcing modified versions or derivative works requires written permission from the original author
+
+---
+
+### 3. Commercial License
+
+Commercial use requires a license. Commercial use includes but is not limited to:
+- Internal use within for-profit organizations
+- Content creation for economic gain (e.g., social media, paid courses)
+- Integration into commercial products or services
+- Use when providing paid services to clients
+
+**License Types & Pricing:**
+
+| Type | Scope | Monthly | Yearly | Perpetual |
+|------|-------|---------|--------|-----------|
+| Individual | Single person | ¥9 | ¥59 | ¥89 |
+| Team | 2-20 users | ¥39-99 | ¥399-999 | ¥999-2,499 |
+| Enterprise | 21+ users | ¥199+ | ¥1,999+ | ¥4,999+ |
+
+**Special Discounts:**
+- Educational institutions, non-profits: 50% off
+- Open source projects: Free (written application required)
+- Government agencies: 30% off
+
+**Payment Methods:** Determined upon contact (Alipay, WeChat Pay, Bank Transfer supported)
+
+---
+
+### 4. Contact
+
+| Channel | Information |
+|---------|-------------|
+| Author/Licensor | Jay-Victor |
+| Email | 18261738221@163.com |
+| QQ | 1061037299 |
+| QQ Group | 1091235240 |
+| GitHub | https://github.com/Jay-Victor/Acuspic |
+| Gitee | https://gitee.com/Jay-Victor/Acuspic |
+
+---
+
+### 5. Disclaimer
+
+1. The software is provided "as is" without any express or implied warranties.
+2. The Licensor shall not be liable for any direct or indirect damages arising from the use of this software.
+3. Users are responsible for backing up their important data.
+4. This software does not collect user data; all data is stored locally on the device.
+5. When using third-party image hosting services, users must comply with their respective privacy policies.
+6. Users shall bear all consequences arising from violation of this agreement; the Licensor shall not be liable.
+7. The Licensor shall not be liable for any modified versions or derivative works created by users; such liability shall be borne by the modifier.
+8. Users shall bear legal liability for any infringement of third-party rights arising from the use of this software.
+9. The Licensor reserves the right to pursue legal remedies for user's breach of this agreement.
+
+---
+
+### 6. Miscellaneous
+
+1. This agreement is governed by the laws of the People's Republic of China.
+2. Unresolved matters shall be negotiated through the contact channels above.
+3. In case of conflict between Chinese and English versions, the Chinese version prevails.
+4. By using this software, you agree to the terms of this agreement.
+5. The Licensor reserves the right to terminate the license of users who violate this agreement upon notice.
+
+---
+
+**By using this software, you acknowledge that you have read and agree to the terms of this agreement.**

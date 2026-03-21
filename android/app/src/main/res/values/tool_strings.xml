@@ -1,0 +1,15 @@
+<resources>
+    <string name="tool_bold">粗体</string>
+    <string name="tool_italic">斜体</string>
+    <string name="tool_strikethrough">删除线</string>
+    <string name="tool_heading">标题</string>
+    <string name="tool_list">无序列表</string>
+    <string name="tool_ordered_list">有序列表</string>
+    <string name="tool_quote">引用</string>
+    <string name="tool_code">代码块</string>
+    <string name="tool_inline_code">行内代码</string>
+    <string name="tool_link">链接</string>
+    <string name="tool_image">图片</string>
+    <string name="tool_divider">分隔线</string>
+    <string name="tool_table">表格</string>
+</resources>

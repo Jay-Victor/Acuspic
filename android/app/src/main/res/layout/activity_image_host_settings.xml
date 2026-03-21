@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_background"
+    android:orientation="vertical">
+
+    <!-- 标题栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_toolbar_gradient"
+        android:elevation="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="12dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_back"
+            app:tint="@color/dark_text_primary" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:text="图床设置"
+            android:textColor="@color/dark_text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- 启用图床 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_vertical_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="启用图床"
+                        android:textColor="@color/dark_text_primary"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="插入图片时自动上传到图床"
+                        android:textColor="@color/dark_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <Switch
+                    android:id="@+id/switchEnable"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false" />
+            </LinearLayout>
+
+            <!-- 自动上传 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_vertical_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="自动上传"
+                        android:textColor="@color/dark_text_primary"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="选择图片后自动上传，无需确认"
+                        android:textColor="@color/dark_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <Switch
+                    android:id="@+id/switchAutoUpload"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true" />
+            </LinearLayout>
+
+            <!-- 选择图床 -->
+            <LinearLayout
+                android:id="@+id/btnSelectHost"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_vertical_button"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="选择图床"
+                        android:textColor="@color/dark_text_primary"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/tvCurrentHost"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="未选择"
+                        android:textColor="@color/dark_text_secondary"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="@color/dark_text_secondary" />
+            </LinearLayout>
+
+            <!-- API Token 输入 -->
+            <LinearLayout
+                android:id="@+id/layoutApiKey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_vertical_button"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="API Token"
+                    android:textColor="@color/dark_text_secondary"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etApiKey"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_input_dark"
+                    android:hint="请输入 API Token"
+                    android:inputType="text"
+                    android:padding="12dp"
+                    android:textColor="@color/dark_text_primary"
+                    android:textColorHint="@color/dark_text_hint"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- API Secret 输入 -->
+            <LinearLayout
+                android:id="@+id/layoutApiSecret"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_vertical_button"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="API Secret"
+                    android:textColor="@color/dark_text_secondary"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etApiSecret"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_input_dark"
+                    android:hint="请输入 API Secret"
+                    android:inputType="textPassword"
+                    android:padding="12dp"
+                    android:textColor="@color/dark_text_primary"
+                    android:textColorHint="@color/dark_text_hint"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- GitHub 仓库 -->
+            <LinearLayout
+                android:id="@+id/layoutGitHubRepo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_vertical_button"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GitHub 仓库"
+                    android:textColor="@color/dark_text_secondary"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etGitHubRepo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_input_dark"
+                    android:hint="格式：用户名/仓库名"
+                    android:inputType="text"
+                    android:padding="12dp"
+                    android:textColor="@color/dark_text_primary"
+                    android:textColorHint="@color/dark_text_hint"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- GitHub 分支 -->
+            <LinearLayout
+                android:id="@+id/layoutGitHubBranch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_vertical_button"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="分支名称"
+                    android:textColor="@color/dark_text_secondary"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etGitHubBranch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_input_dark"
+                    android:hint="例如：main"
+                    android:inputType="text"
+                    android:padding="12dp"
+                    android:text="main"
+                    android:textColor="@color/dark_text_primary"
+                    android:textColorHint="@color/dark_text_hint"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- 自定义域名 -->
+            <LinearLayout
+                android:id="@+id/layoutCustomDomain"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_vertical_button"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="自定义域名"
+                    android:textColor="@color/dark_text_secondary"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etCustomDomain"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_input_dark"
+                    android:hint="例如：https://cdn.example.com"
+                    android:inputType="textUri"
+                    android:padding="12dp"
+                    android:textColor="@color/dark_text_primary"
+                    android:textColorHint="@color/dark_text_hint"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- 自定义上传地址 -->
+            <LinearLayout
+                android:id="@+id/layoutCustomUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_vertical_button"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="上传接口地址"
+                    android:textColor="@color/dark_text_secondary"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etCustomUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_input_dark"
+                    android:hint="例如：https://api.example.com/upload"
+                    android:inputType="textUri"
+                    android:padding="12dp"
+                    android:textColor="@color/dark_text_primary"
+                    android:textColorHint="@color/dark_text_hint"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- 测试结果 -->
+            <TextView
+                android:id="@+id/tvTestResult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_vertical_button"
+                android:padding="16dp"
+                android:textColor="@color/dark_text_primary"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <!-- 操作按钮 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTestUpload"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="@color/accent_blue"
+                android:enabled="false"
+                android:padding="12dp"
+                android:text="测试上传"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:cornerRadius="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewHistory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/dark_surface"
+                android:padding="12dp"
+                android:text="查看上传历史"
+                android:textColor="@color/dark_text_primary"
+                android:textSize="16sp"
+                app:cornerRadius="8dp"
+                app:strokeColor="@color/dark_border"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/accent_blue"
+                android:padding="12dp"
+                android:text="保存配置"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:cornerRadius="8dp" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

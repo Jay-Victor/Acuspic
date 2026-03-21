@@ -1,0 +1,46 @@
+# APK Signing Keystore - DO NOT COMMIT
+*.keystore
+*.jks
+*.p12
+acuspic.p12
+
+# Local configuration (contains sensitive data)
+local.properties
+
+# Build outputs
+build/
+dist/
+*.apk
+*.aab
+
+# Gradle cache
+.gradle/
+
+# Kotlin error logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Android Studio captures
+captures/
+
+# Memory analysis
+*.hprof
+
+# NDK builds
+externalNativeBuild/
+.cxx/
+
+# Compiled files
+*.class
+*.dex

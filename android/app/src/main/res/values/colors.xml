@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Theme Colors (Edit Mode) -->
+    <color name="dark_background">#1A1A1A</color>
+    <color name="dark_surface">#0F0F0F</color>
+    <color name="dark_text_primary">#E0E0E0</color>
+    <color name="dark_text_secondary">#A0A0A0</color>
+    <color name="dark_text_hint">#707070</color>
+    <color name="dark_text_disabled">#606060</color>
+    <color name="dark_toolbar_bg">#F21A1A1A</color>
+    <color name="dark_toolbar_border">#1AFFFFFF</color>
+    <color name="dark_button_bg">#0DFFFFFF</color>
+    <color name="dark_button_border">#1AFFFFFF</color>
+    <color name="dark_button_disabled">#0DFFFFFF</color>
+    <color name="dark_text_secondary_70">#70A0A0A0</color>
+    
+    <!-- Light Theme Colors (Preview Mode) -->
+    <color name="light_background">#FFFFFF</color>
+    <color name="light_surface">#F6F8FA</color>
+    <color name="light_text_primary">#24292E</color>
+    <color name="light_text_secondary">#6A737D</color>
+    <color name="light_toolbar_bg">#F2FFFFFF</color>
+    <color name="light_toolbar_border">#1A000000</color>
+    <color name="light_button_bg">#0D000000</color>
+    <color name="light_button_border">#1A000000</color>
+    
+    <!-- Accent Colors -->
+    <color name="accent_primary">#3B82F6</color>
+    <color name="accent_primary_light">#60A5FA</color>
+    <color name="accent_primary_dark">#2563EB</color>
+    
+    <!-- Markdown Colors -->
+    <color name="markdown_code_bg">#F6F8FA</color>
+    <color name="markdown_code_text">#E83E8C</color>
+    <color name="markdown_blockquote_border">#DFE2E5</color>
+    <color name="markdown_blockquote_text">#6A737D</color>
+    <color name="markdown_table_border">#DFE2E5</color>
+    <color name="markdown_table_row_alt">#F6F8FA</color>
+    <color name="markdown_hr">#E1E4E8</color>
+    <color name="markdown_link">#0366D6</color>
+    
+    <!-- Status Bar -->
+    <color name="status_bar_bg">#1A3B82F6</color>
+    <color name="status_bar_text">#3B82F6</color>
+    
+    <!-- Divider -->
+    <color name="divider_color">#40FFFFFF</color>
+    <color name="dark_divider">#1AFFFFFF</color>
+
+    <!-- Status Colors -->
+    <color name="success">#4CAF50</color>
+    <color name="error">#F44336</color>
+    <color name="warning">#FF9800</color>
+
+    <!-- Missing colors -->
+    <color name="accent_blue">#3B82F6</color>
+    <color name="white">#FFFFFF</color>
+    <color name="dark_border">#1AFFFFFF</color>
+</resources>

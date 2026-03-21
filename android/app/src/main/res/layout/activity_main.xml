@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_background"
+    android:fitsSystemWindows="false"
+    tools:context=".MainActivity">
+
+    <!-- Status Bar - 优化的状态提示栏 -->
+    <FrameLayout
+        android:id="@+id/statusBar"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:background="@drawable/bg_status_bar"
+        android:translationY="-36dp"
+        android:visibility="visible"
+        android:elevation="4dp"
+        app:layout_constraintTop_toTopOf="parent">
+        
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/status_saved"
+            android:textColor="@color/status_bar_text"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+    </FrameLayout>
+
+    <!-- Top Toolbar - 优化的顶部工具栏 -->
+    <LinearLayout
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_toolbar_gradient"
+        android:elevation="6dp"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="12dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- Title Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/toolbarTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/app_name"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.02" />
+
+                <TextView
+                    android:id="@+id/wordCountText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/word_count_format"
+                    android:textColor="@color/dark_text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btnSettings"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_settings"
+                app:tint="@android:color/white"
+                android:contentDescription="设置" />
+
+            <!-- Mode Toggle - Segmented Control Style (Symmetric Layout) -->
+            <FrameLayout
+                android:id="@+id/modeToggleContainer"
+                android:layout_width="144dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_mode_toggle_container"
+                android:padding="3dp">
+
+                <!-- Sliding Indicator -->
+                <View
+                    android:id="@+id/modeToggleIndicator"
+                    android:layout_width="69dp"
+                    android:layout_height="34dp"
+                    android:layout_marginStart="0dp"
+                    android:layout_gravity="start|center_vertical"
+                    android:background="@drawable/bg_mode_toggle_indicator" />
+
+                <!-- Mode Buttons Container -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:layout_gravity="center">
+
+                    <TextView
+                        android:id="@+id/editModeBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/edit_mode"
+                        android:textAllCaps="false"
+                        android:textColor="@color/mode_toggle_text"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackgroundBorderless" />
+
+                    <TextView
+                        android:id="@+id/previewModeBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/preview_mode"
+                        android:textAllCaps="false"
+                        android:textColor="@color/mode_toggle_text"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackgroundBorderless" />
+                </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Content Container -->
+    <FrameLayout
+        android:id="@+id/contentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/bottomToolbar"
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
+
+        <!-- Edit Area - 使用 NestedScrollView 包装以支持惯性滑动 -->
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/editScrollView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:overScrollMode="always">
+
+            <EditText
+                android:id="@+id/editArea"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:fontFamily="monospace"
+                android:gravity="top|start"
+                android:hint="@string/hint_start_typing"
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:lineSpacingMultiplier="1.6"
+                android:minHeight="500dp"
+                android:padding="16dp"
+                android:scrollbars="vertical"
+                android:textColor="@color/dark_text_primary"
+                android:textColorHint="@color/dark_text_hint"
+                android:textSize="15sp" />
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- Preview Area - 优化的预览区域 -->
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/previewScrollView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0"
+            android:background="@color/light_background"
+            android:visibility="invisible"
+            android:overScrollMode="always"
+            android:scrollbars="vertical">
+
+            <TextView
+                android:id="@+id/previewArea"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="20dp"
+                android:lineSpacingMultiplier="1.7"
+                android:textColor="@color/light_text_primary"
+                android:textSize="15sp" />
+        </androidx.core.widget.NestedScrollView>
+
+
+    </FrameLayout>
+
+    <!-- Bottom Toolbar - 优化的底部工具栏 -->
+    <LinearLayout
+        android:id="@+id/bottomToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/dark_surface"
+        android:elevation="8dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="12dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Format Tools Section -->
+        <HorizontalScrollView
+            android:id="@+id/formatToolsScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:id="@+id/formatTools"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Undo/Redo Group -->
+                <ImageButton
+                    android:id="@+id/btnUndo"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_undo"
+                    android:src="@drawable/ic_undo" />
+
+                <ImageButton
+                    android:id="@+id/btnRedo"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_redo"
+                    android:src="@drawable/ic_redo" />
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="24dp"
+                    android:layout_marginHorizontal="6dp"
+                    android:background="@color/dark_button_border" />
+
+                <!-- Text Style Group -->
+                <ImageButton
+                    android:id="@+id/btnBold"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_bold"
+                    android:src="@drawable/ic_bold" />
+
+                <ImageButton
+                    android:id="@+id/btnItalic"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_italic"
+                    android:src="@drawable/ic_italic" />
+
+                <ImageButton
+                    android:id="@+id/btnStrikethrough"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_strikethrough"
+                    android:src="@drawable/ic_strikethrough" />
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="24dp"
+                    android:layout_marginHorizontal="6dp"
+                    android:background="@color/dark_button_border" />
+
+                <!-- Structure Group -->
+                <ImageButton
+                    android:id="@+id/btnHeading"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_heading"
+                    android:src="@drawable/ic_heading" />
+
+                <ImageButton
+                    android:id="@+id/btnList"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_list"
+                    android:src="@drawable/ic_list" />
+
+                <ImageButton
+                    android:id="@+id/btnOrderedList"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_ordered_list"
+                    android:src="@drawable/ic_ordered_list" />
+
+                <ImageButton
+                    android:id="@+id/btnQuote"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_quote"
+                    android:src="@drawable/ic_quote" />
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="24dp"
+                    android:layout_marginHorizontal="6dp"
+                    android:background="@color/dark_button_border" />
+
+                <!-- Code Group -->
+                <ImageButton
+                    android:id="@+id/btnCode"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_code"
+                    android:src="@drawable/ic_code" />
+
+                <ImageButton
+                    android:id="@+id/btnInlineCode"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_inline_code"
+                    android:src="@drawable/ic_inline_code" />
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="24dp"
+                    android:layout_marginHorizontal="6dp"
+                    android:background="@color/dark_button_border" />
+
+                <!-- Insert Group -->
+                <ImageButton
+                    android:id="@+id/btnLink"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_link"
+                    android:src="@drawable/ic_link" />
+
+                <ImageButton
+                    android:id="@+id/btnImage"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_image"
+                    android:src="@drawable/ic_image" />
+
+                <ImageButton
+                    android:id="@+id/btnDivider"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_divider"
+                    android:src="@drawable/ic_divider" />
+
+                <ImageButton
+                    android:id="@+id/btnTable"
+                    style="@style/ToolButton"
+                    android:contentDescription="@string/tool_table"
+                    android:src="@drawable/ic_table" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Divider Line -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="@color/divider_color"
+            android:alpha="0.5" />
+
+        <!-- Quick Actions - 优化的快捷操作按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClear"
+                style="@style/AlignedActionButton.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:text="@string/action_clear"
+                app:icon="@drawable/ic_clear" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCopy"
+                style="@style/AlignedActionButton.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:text="@string/action_copy"
+                app:icon="@drawable/ic_copy" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnShare"
+                style="@style/AlignedActionButton.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:text="@string/action_share"
+                app:icon="@drawable/ic_share" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnImport"
+                style="@style/AlignedActionButton.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:text="@string/action_import"
+                app:icon="@drawable/ic_import" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnExport"
+                style="@style/AlignedActionButton.Primary"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:text="@string/action_export_short"
+                app:icon="@drawable/ic_export" />
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

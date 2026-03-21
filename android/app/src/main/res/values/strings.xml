@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Acuspic</string>
+    <string name="edit_mode">编辑</string>
+    <string name="preview_mode">预览</string>
+    <string name="hint_start_typing">开始输入 Markdown...</string>
+    <string name="word_count_format" formatted="false">字符: %d | 行数: %d</string>
+    <string name="tool_undo">撤销</string>
+    <string name="tool_redo">重做</string>
+    <string name="action_clear">清空</string>
+    <string name="action_copy">复制</string>
+    <string name="action_share">分享</string>
+    <string name="action_import">导入</string>
+    <string name="action_export">导出MD</string>
+    <string name="action_export_short">导出</string>
+    <string name="status_saved">已保存</string>
+    <string name="status_saving">保存中...</string>
+    <string name="status_copied">已复制到剪贴板</string>
+    <string name="status_exported">导出成功</string>
+    <string name="status_imported">导入成功</string>
+    <string name="status_shared">分享成功</string>
+    <string name="confirm_clear">确定要清空所有内容吗？</string>
+    <string name="confirm_yes">确定</string>
+    <string name="confirm_cancel">取消</string>
+    <string name="confirm_title">确认</string>
+    <string name="error_import">导入失败，请重试</string>
+    <string name="error_export">导出失败，请重试</string>
+</resources>

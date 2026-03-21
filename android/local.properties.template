@@ -1,0 +1,26 @@
+# 本地属性配置文件
+# 复制此文件为 local.properties 并设置正确的 SDK 路径
+
+# Windows 示例:
+sdk.dir=C\:\\Users\\你的用户名\\AppData\\Local\\Android\\Sdk
+
+# macOS 示例:
+# sdk.dir=/Users/你的用户名/Library/Android/sdk
+
+# Linux 示例:
+# sdk.dir=/home/你的用户名/Android/Sdk
+
+# ===========================================
+# 密钥库配置 (必须填写)
+# ===========================================
+# 密钥库文件名
+KEYSTORE_FILE=acuspic.p12
+
+# 密钥库密码
+KEYSTORE_PASSWORD=你的密钥库密码
+
+# 密钥别名
+KEYSTORE_ALIAS=acuspic
+
+# 密钥密码
+KEY_PASSWORD=你的密钥密码

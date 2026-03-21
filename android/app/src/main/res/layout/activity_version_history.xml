@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_background"
+    android:orientation="vertical">
+
+    <!-- 顶部工具栏 -->
+    <LinearLayout
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_toolbar_gradient"
+        android:elevation="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="12dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_back"
+            app:tint="@android:color/white"
+            android:contentDescription="返回" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:text="版本历史"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.02" />
+
+        <ImageButton
+            android:id="@+id/btnClearAll"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_delete"
+            app:tint="@android:color/white"
+            android:contentDescription="清空全部" />
+    </LinearLayout>
+
+    <!-- 存储状态摘要 -->
+    <LinearLayout
+        android:id="@+id/storageSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="@color/dark_surface"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_server"
+            app:tint="@color/accent_primary" />
+
+        <TextView
+            android:id="@+id/tvDownloadedCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="已下载 0 个版本"
+            android:textColor="@color/dark_text_primary"
+            android:textSize="14sp" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="16dp"
+            android:layout_marginHorizontal="16dp"
+            android:background="@color/dark_divider" />
+
+        <TextView
+            android:id="@+id/tvTotalSize"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="共 0 MB"
+            android:textColor="@color/dark_text_secondary"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- 版本列表 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:clipToPadding="false" />
+
+        <LinearLayout
+            android:id="@+id/emptyView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_history"
+                app:tint="@color/dark_text_secondary"
+                android:alpha="0.5" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="暂无版本历史"
+                android:textColor="@color/dark_text_secondary"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="检查更新后会自动记录"
+                android:textColor="@color/dark_text_hint"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <!-- 批量操作栏 -->
+    <LinearLayout
+        android:id="@+id/batchActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:background="@color/dark_surface"
+        android:elevation="8dp"
+        android:visibility="gone"
+        android:gravity="center_vertical">
+
+        <CheckBox
+            android:id="@+id/checkboxSelectAll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="全选"
+            android:textColor="@color/dark_text_primary"
+            android:buttonTint="@color/accent_primary" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/tvSelectedCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="已选择 0 项"
+            android:textColor="@color/dark_text_secondary"
+            android:textSize="14sp"
+            android:layout_marginEnd="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDeleteSelected"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="删除选中"
+            android:textColor="@color/error"
+            app:icon="@drawable/ic_delete"
+            app:iconTint="@color/error" />
+    </LinearLayout>
+
+</LinearLayout>
