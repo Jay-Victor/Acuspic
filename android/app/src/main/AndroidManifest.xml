@@ -20,6 +20,9 @@
     <!-- 读取手机状态（用于判断国内/国外网络） -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     
+    <!-- Android 8.0+ 安装APK权限 -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    
     <!-- 声明应用使用特性 -->
     <uses-feature android:name="android.hardware.touchscreen"
         android:required="false" />

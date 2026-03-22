@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.util.Log
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.CoroutineScope
@@ -37,9 +38,11 @@ class UpdateManager(private val context: Context) {
     private var currentDownloadJob: kotlinx.coroutines.Job? = null
 
     companion object {
+        private const val TAG = "UpdateManager"
+        
         // 当前版本配置 - 必须与 build.gradle.kts 保持一致
-        const val CURRENT_VERSION_CODE = 3
-        const val CURRENT_VERSION_NAME = "1.0.2"
+        const val CURRENT_VERSION_CODE = 4
+        const val CURRENT_VERSION_NAME = "1.0.3"
         
         // APK文件名（使用大写Apk避免微信/QQ添加.1后缀）
         fun getApkFileName(versionName: String = CURRENT_VERSION_NAME): String {
@@ -141,31 +144,58 @@ class UpdateManager(private val context: Context) {
 
     /**
      * 安装APK
+     * 支持 Android 7.0+ 的 FileProvider 和 Android 8.0+ 的安装权限
      */
     private fun installApk(fileName: String) {
-        val file = downloadManager.getDownloadedFile(fileName) ?: return
-        
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                // Android 7.0+ 使用FileProvider
-                val uri = FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    file
-                )
-                setDataAndType(uri, "application/vnd.android.package-archive")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            } else {
-                setDataAndType(
-                    Uri.fromFile(file),
-                    "application/vnd.android.package-archive"
-                )
+        try {
+            val file = downloadManager.getDownloadedFile(fileName)
+            if (file == null || !file.exists()) {
+                Log.e(TAG, "APK文件不存在: $fileName")
+                Toast.makeText(context, "安装文件不存在", Toast.LENGTH_LONG).show()
+                return
             }
+            
+            Log.i(TAG, "开始安装APK: ${file.absolutePath}, 大小: ${file.length()} bytes")
+            
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    // Android 7.0+ 使用FileProvider
+                    val uri = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        file
+                    )
+                    setDataAndType(uri, "application/vnd.android.package-archive")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    Log.d(TAG, "使用FileProvider URI: $uri")
+                } else {
+                    setDataAndType(
+                        Uri.fromFile(file),
+                        "application/vnd.android.package-archive"
+                    )
+                    Log.d(TAG, "使用file:// URI")
+                }
+            }
+            
+            // 验证Intent是否可解析
+            val packageManager = context.packageManager
+            val activities = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
+            if (activities.isNullOrEmpty()) {
+                Log.e(TAG, "无法找到处理APK安装的应用")
+                Toast.makeText(context, "无法打开安装界面", Toast.LENGTH_LONG).show()
+                return
+            }
+            
+            Log.i(TAG, "启动安装界面...")
+            context.startActivity(intent)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "安装APK失败: ${e.message}", e)
+            Toast.makeText(context, "安装失败: ${e.message}", Toast.LENGTH_LONG).show()
         }
-        
-        context.startActivity(intent)
     }
 
     /**

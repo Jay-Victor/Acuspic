@@ -52,8 +52,10 @@
     <color name="error">#F44336</color>
     <color name="warning">#FF9800</color>
 
-    <!-- Missing colors -->
+    <!-- Additional colors -->
+    <color name="accent_secondary">#60A5FA</color>
     <color name="accent_blue">#3B82F6</color>
     <color name="white">#FFFFFF</color>
     <color name="dark_border">#1AFFFFFF</color>
+    <color name="dark_surface_variant">#1AFFFFFF</color>
 </resources>

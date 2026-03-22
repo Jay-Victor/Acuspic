@@ -172,6 +172,7 @@ class SettingsActivity : AppCompatActivity() {
     
     private fun showDownloadDialog(versionInfo: com.acuspic.app.update.VersionInfo) {
         val dialog = DownloadProgressDialog(this)
+        dialog.setVersionInfo(versionInfo.versionName)
         dialog.show()
         
         // 开始下载
@@ -185,12 +186,11 @@ class SettingsActivity : AppCompatActivity() {
                         dialog.updateProgress(status.progress, status.speed)
                     }
                     is com.acuspic.app.update.DownloadStatus.Success -> {
-                        dialog.dismiss()
-                        Toast.makeText(this@SettingsActivity, "下载完成，开始安装", Toast.LENGTH_SHORT).show()
+                        dialog.setComplete()
+                        Toast.makeText(this@SettingsActivity, "下载完成，正在安装...", Toast.LENGTH_SHORT).show()
                     }
                     is com.acuspic.app.update.DownloadStatus.Error -> {
-                        dialog.dismiss()
-                        Toast.makeText(this@SettingsActivity, status.message, Toast.LENGTH_LONG).show()
+                        dialog.setError(status.message)
                     }
                     is com.acuspic.app.update.DownloadStatus.Cancelled -> {
                         dialog.dismiss()
@@ -202,6 +202,10 @@ class SettingsActivity : AppCompatActivity() {
         
         dialog.setOnCancelListener {
             updateManager.cancelDownload()
+        }
+        
+        dialog.setOnBackgroundListener {
+            Toast.makeText(this@SettingsActivity, "正在后台下载，下载完成后将自动安装", Toast.LENGTH_LONG).show()
         }
     }
     
