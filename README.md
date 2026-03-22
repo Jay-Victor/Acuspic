@@ -32,7 +32,7 @@
   <img src="https://img.shields.io/badge/Language-Kotlin-orange.svg?style=flat-square&logo=kotlin" alt="Language">
   <img src="https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat-square" alt="API">
   <img src="https://img.shields.io/badge/Size-6MB-blue.svg?style=flat-square" alt="Size">
-  <img src="https://img.shields.io/badge/Version-1.0.0-purple.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.0.3-purple.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/License-Custom-9cf.svg?style=flat-square" alt="License">
 </p>
 
@@ -1391,6 +1391,30 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 ### Latest Version
 
+**v1.0.3** (2026-03-22) - Update Mechanism Fix
+
+- 🐛 Fixed APK installation issue on Android 8.0+
+- 🐛 Fixed FileProvider configuration
+- 🔧 Optimized installation flow with detailed logging
+- 🎨 Redesigned download progress dialog (Material Design 3)
+- ✨ Added background download support
+
+<details>
+<summary>Previous Versions</summary>
+
+**v1.0.2** (2026-03-22) - Version Comparison Fix
+
+- 🐛 Fixed semantic version comparison logic
+- 🐛 Fixed version history delete UI not updating
+- 🔧 Added network retry mechanism (max 3 retries)
+- 🔧 Added auto-switch to Gitee when GitHub fails
+
+**v1.0.1** (2026-03-22) - Code Quality Improvement
+
+- 🐛 Fixed exception handling (`e.printStackTrace()` → `Log.e()`)
+- 🔧 Added Timber logging library
+- 🔧 Added EditorConfig for code style
+
 **v1.0.0** (2026-03-21) - Initial Release
 
 - ✨ Core Markdown editor functionality
@@ -1400,6 +1424,8 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 - ✨ Dual-source update system
 - ✨ Material Design 3 interface
 - ✨ Dark theme support
+
+</details>
 
 ---
 
