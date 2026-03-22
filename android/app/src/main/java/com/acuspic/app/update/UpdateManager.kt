@@ -31,8 +31,8 @@ class UpdateManager(private val context: Context) {
     companion object {
         private const val TAG = "UpdateManager"
         
-        const val CURRENT_VERSION_CODE = 5
-        const val CURRENT_VERSION_NAME = "1.0.4"
+        const val CURRENT_VERSION_CODE = 6
+        const val CURRENT_VERSION_NAME = "1.0.5"
         
         fun getApkFileName(versionName: String = CURRENT_VERSION_NAME): String {
             return "Acuspic-v$versionName.Apk"

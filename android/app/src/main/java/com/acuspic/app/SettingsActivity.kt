@@ -1,6 +1,5 @@
 package com.acuspic.app
 
-import android.app.Activity
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -13,7 +12,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.acuspic.app.imagehost.ImageHostPreferences
@@ -24,6 +25,7 @@ import com.acuspic.app.update.RepositoryType
 import com.acuspic.app.update.UpdateCheckResult
 import com.acuspic.app.update.UpdateManager
 import com.acuspic.app.update.VersionInfo
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -50,6 +52,8 @@ class SettingsActivity : AppCompatActivity() {
     private var isCheckingUpdate = false
     private var currentVersionInfo: VersionInfo? = null
     private var downloadProgressDialog: DownloadProgressDialog? = null
+    private var downloadJob: Job? = null
+    private var installJob: Job? = null
 
     private val installPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -68,11 +72,24 @@ class SettingsActivity : AppCompatActivity() {
         initViews()
         setupListeners()
         updateUI()
+        
+        // 在 onCreate 中启动 Flow 收集，确保只收集一次
+        collectDownloadStatus()
+        collectInstallStatus()
     }
 
     override fun onResume() {
         super.onResume()
         checkPendingInstall()
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        // 取消所有协程
+        downloadJob?.cancel()
+        installJob?.cancel()
+        downloadProgressDialog?.dismiss()
+        downloadProgressDialog = null
     }
 
     private fun initViews() {
@@ -270,57 +287,71 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
     
-    private fun startDownload(versionInfo: VersionInfo) {
-        downloadProgressDialog = DownloadProgressDialog(this)
-        downloadProgressDialog?.setVersionInfo(versionInfo.versionName)
-        downloadProgressDialog?.show()
-        
-        updateManager.downloadAndInstall(versionInfo)
-        
-        lifecycleScope.launch {
-            updateManager.downloadStatus.collect { status ->
-                when (status) {
-                    is DownloadStatus.Progress -> {
-                        downloadProgressDialog?.updateProgress(status.progress, status.speed)
+    private fun collectDownloadStatus() {
+        downloadJob = lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                updateManager.downloadStatus.collect { status ->
+                    when (status) {
+                        is DownloadStatus.Progress -> {
+                            downloadProgressDialog?.updateProgress(status.progress, status.speed)
+                        }
+                        is DownloadStatus.Success -> {
+                            downloadProgressDialog?.setComplete()
+                        }
+                        is DownloadStatus.Error -> {
+                            downloadProgressDialog?.setError(status.message)
+                        }
+                        is DownloadStatus.Cancelled -> {
+                            downloadProgressDialog?.dismiss()
+                            downloadProgressDialog = null
+                        }
+                        else -> {}
                     }
-                    is DownloadStatus.Success -> {
-                        downloadProgressDialog?.setComplete()
-                    }
-                    is DownloadStatus.Error -> {
-                        downloadProgressDialog?.setError(status.message)
-                    }
-                    is DownloadStatus.Cancelled -> {
-                        downloadProgressDialog?.dismiss()
-                    }
-                    else -> {}
                 }
             }
         }
+    }
+    
+    private fun collectInstallStatus() {
+        installJob = lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                updateManager.installStatus.collect { status ->
+                    when (status) {
+                        is UpdateManager.InstallStatus.ReadyToInstall -> {
+                            tryInstallApk(status.file)
+                        }
+                        is UpdateManager.InstallStatus.NeedPermission -> {
+                            requestInstallPermission(status.file)
+                        }
+                        is UpdateManager.InstallStatus.Error -> {
+                            downloadProgressDialog?.setError(status.message)
+                        }
+                        else -> {}
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun startDownload(versionInfo: VersionInfo) {
+        // 确保对话框只创建一次
+        if (downloadProgressDialog?.isShowing == true) {
+            downloadProgressDialog?.dismiss()
+        }
         
+        downloadProgressDialog = DownloadProgressDialog(this)
+        downloadProgressDialog?.setVersionInfo(versionInfo.versionName)
         downloadProgressDialog?.setOnCancelListener {
             updateManager.cancelDownload()
         }
-        
         downloadProgressDialog?.setOnBackgroundListener {
             Toast.makeText(this, "正在后台下载，完成后将自动提示安装", Toast.LENGTH_LONG).show()
+            // 后台下载时不关闭对话框，只是隐藏
         }
-
-        lifecycleScope.launch {
-            updateManager.installStatus.collect { status ->
-                when (status) {
-                    is UpdateManager.InstallStatus.ReadyToInstall -> {
-                        tryInstallApk(status.file)
-                    }
-                    is UpdateManager.InstallStatus.NeedPermission -> {
-                        requestInstallPermission(status.file)
-                    }
-                    is UpdateManager.InstallStatus.Error -> {
-                        downloadProgressDialog?.setError(status.message)
-                    }
-                    else -> {}
-                }
-            }
-        }
+        downloadProgressDialog?.show()
+        
+        // 开始下载
+        updateManager.downloadAndInstall(versionInfo)
     }
 
     private fun tryInstallApk(file: File) {
@@ -332,6 +363,7 @@ class SettingsActivity : AppCompatActivity() {
         }
         
         downloadProgressDialog?.dismiss()
+        downloadProgressDialog = null
         
         MaterialAlertDialogBuilder(this)
             .setTitle("安装更新")
@@ -347,6 +379,7 @@ class SettingsActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (!packageManager.canRequestPackageInstalls()) {
                 downloadProgressDialog?.dismiss()
+                downloadProgressDialog = null
                 
                 MaterialAlertDialogBuilder(this)
                     .setTitle("需要权限")

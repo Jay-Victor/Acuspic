@@ -7,6 +7,28 @@
 
 ---
 
+## [1.0.5] - 2026-03-22
+
+### Bug修复
+
+- 🐛 **修复下载更新跳转问题** - 修复点击"立即下载"后跳转到产品初始页面的问题
+- 🐛 **修复 Flow 收集器重复创建问题** - 使用 `repeatOnLifecycle` 确保 Flow 只收集一次
+- 🐛 **修复 Activity 重建时状态丢失问题** - 在 `onCreate` 中初始化 Flow 收集，避免重复订阅
+
+### 功能优化
+
+- 🔧 **使用 `repeatOnLifecycle`** - 替代直接 `lifecycleScope.launch`，正确管理 Flow 生命周期
+- 🔧 **优化资源清理** - 在 `onDestroy` 中取消协程、关闭对话框，避免内存泄漏
+- 🔧 **重构下载流程** - 将 Flow 收集逻辑提取到独立方法，提高代码可维护性
+
+### 技术改进
+
+- 📝 SettingsActivity.kt - 重构 `startDownload()` 方法，使用 `collectDownloadStatus()` 和 `collectInstallStatus()`
+- 📝 SettingsActivity.kt - 添加 `downloadJob` 和 `installJob` 管理协程生命周期
+- 📝 SettingsActivity.kt - 在 `onDestroy` 中正确清理资源
+
+---
+
 ## [1.0.4] - 2026-03-22
 
 ### Bug修复
@@ -195,6 +217,7 @@
 
 ---
 
+[1.0.5]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.5
 [1.0.4]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.4
 [1.0.3]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.3
 [1.0.2]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.2

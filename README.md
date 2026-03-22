@@ -32,7 +32,7 @@
   <img src="https://img.shields.io/badge/Language-Kotlin-orange.svg?style=flat-square&logo=kotlin" alt="Language">
   <img src="https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat-square" alt="API">
   <img src="https://img.shields.io/badge/Size-6MB-blue.svg?style=flat-square" alt="Size">
-  <img src="https://img.shields.io/badge/Version-1.0.4-purple.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.0.5-purple.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/License-Custom-9cf.svg?style=flat-square" alt="License">
 </p>
 
@@ -646,6 +646,15 @@ KEY_PASSWORD=你的密钥密码
 
 ### 最新版本
 
+**v1.0.5** (2026-03-22) - 下载流程修复
+
+- 🐛 修复点击"立即下载"后跳转到初始页面的问题
+- 🔧 使用 `repeatOnLifecycle` 管理 Flow 生命周期
+- 🔧 修复 Flow 收集器重复创建问题
+
+<details>
+<summary>历史版本</summary>
+
 **v1.0.4** (2026-03-22) - 安装权限优化
 
 - ✨ 新增 Android 11+ 包可见性声明
@@ -653,9 +662,6 @@ KEY_PASSWORD=你的密钥密码
 - 🐛 修复权限授权后无法继续安装的问题
 - 🔧 使用 ActivityResultLauncher 处理权限请求
 - 🔧 新增 InstallStatus 状态管理
-
-<details>
-<summary>历史版本</summary>
 
 **v1.0.3** (2026-03-22) - 更新机制修复
 
