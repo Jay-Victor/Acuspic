@@ -1,139 +1,149 @@
 package com.acuspic.app.update
 
 import android.content.Context
-import android.os.Environment
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.RandomAccessFile
+import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import java.text.DecimalFormat
 
 /**
  * 下载管理器
- * 支持断点续传、进度回调、速度计算
+ * 负责文件下载、进度跟踪、断点续传等功能
  */
 class DownloadManager(private val context: Context) {
 
     companion object {
-        // 下载目录
-        private const val DOWNLOAD_DIR = "Acuspic/Downloads"
-        // 缓冲区大小 8KB
+        private const val TAG = "DownloadManager"
         private const val BUFFER_SIZE = 8192
-        // 进度更新间隔（毫秒）
-        private const val PROGRESS_INTERVAL = 500L
+        private const val CONNECT_TIMEOUT = 30000
+        private const val READ_TIMEOUT = 30000
+        private const val MAX_REDIRECTS = 5
     }
 
     private var isCancelled = false
     private var currentConnection: HttpURLConnection? = null
 
+    private fun getDownloadDir(): File {
+        val dir = File(context.getExternalFilesDir(null), "Acuspic/Downloads")
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        return dir
+    }
+
     /**
      * 下载文件
      * @param url 下载地址
      * @param fileName 文件名
-     * @param enableResume 是否启用断点续传
+     * @param showProgress 是否显示进度
      * @return 下载状态流
      */
-    fun download(
-        url: String,
-        fileName: String,
-        enableResume: Boolean = true
-    ): Flow<DownloadStatus> = flow {
+    fun download(url: String, fileName: String, showProgress: Boolean = true): Flow<DownloadStatus> = flow {
         isCancelled = false
         
+        emit(DownloadStatus.Connecting)
+        
         try {
-            val downloadDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), DOWNLOAD_DIR)
-            if (!downloadDir.exists()) {
-                downloadDir.mkdirs()
-            }
+            val file = File(getDownloadDir(), fileName)
             
-            val file = File(downloadDir, fileName)
-            val tempFile = File(downloadDir, "$fileName.tmp")
+            val finalUrl = followRedirects(url)
+            Log.d(TAG, "最终下载地址: $finalUrl")
             
-            // 已下载的字节数
-            var downloadedBytes = if (enableResume && tempFile.exists()) tempFile.length() else 0L
-            
-            // 获取文件信息
-            val (totalBytes, supportsResume) = getFileInfo(url)
-            
-            if (totalBytes <= 0) {
-                emit(DownloadStatus.Error("无法获取文件信息"))
-                return@flow
-            }
-            
-            // 如果文件已完整下载
-            if (file.exists() && file.length() == totalBytes) {
-                emit(DownloadStatus.Success)
-                return@flow
-            }
-            
-            // 建立连接
-            val connection = createConnection(url, if (enableResume && supportsResume) downloadedBytes else 0L)
+            val connection = URL(finalUrl).openConnection() as HttpURLConnection
             currentConnection = connection
+            connection.apply {
+                requestMethod = "GET"
+                connectTimeout = CONNECT_TIMEOUT
+                readTimeout = READ_TIMEOUT
+                setRequestProperty("User-Agent", "Acuspic-Android-App")
+                setRequestProperty("Accept", "*/*")
+            }
+            
+            connection.connect()
             
             val responseCode = connection.responseCode
-            if (responseCode != HttpURLConnection.HTTP_OK && 
-                responseCode != HttpURLConnection.HTTP_PARTIAL) {
-                emit(DownloadStatus.Error("服务器返回错误: $responseCode"))
+            Log.d(TAG, "HTTP响应码: $responseCode")
+            
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                val errorStream = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                Log.e(TAG, "下载失败: HTTP $responseCode, $errorStream")
+                emit(DownloadStatus.Error("服务器返回错误: HTTP $responseCode"))
                 return@flow
             }
             
-            // 开始下载
-            val inputStream = connection.inputStream
-            val randomAccessFile = RandomAccessFile(tempFile, "rw")
+            val contentLength = connection.contentLengthLong
+            Log.i(TAG, "文件大小: $contentLength bytes")
             
-            if (downloadedBytes > 0) {
-                randomAccessFile.seek(downloadedBytes)
+            if (contentLength <= 0) {
+                emit(DownloadStatus.Error("无法获取文件大小"))
+                return@flow
             }
             
-            val buffer = ByteArray(BUFFER_SIZE)
-            var bytesRead: Int
-            var lastUpdateTime = System.currentTimeMillis()
-            var lastDownloadedBytes = downloadedBytes
+            val inputStream = connection.inputStream
+            val outputStream = FileOutputStream(file)
             
-            inputStream.use { input ->
-                randomAccessFile.use { output ->
-                    while (input.read(buffer).also { bytesRead = it } != -1) {
-                        if (isCancelled) {
-                            emit(DownloadStatus.Cancelled)
-                            return@flow
-                        }
+            val buffer = ByteArray(BUFFER_SIZE)
+            var totalBytesRead = 0L
+            var bytesRead: Int
+            var lastProgressTime = System.currentTimeMillis()
+            var lastBytesRead = 0L
+            var speed = ""
+            
+            emit(DownloadStatus.Progress(0, "正在连接..."))
+            
+            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                if (isCancelled) {
+                    outputStream.close()
+                    inputStream.close()
+                    file.delete()
+                    emit(DownloadStatus.Cancelled)
+                    return@flow
+                }
+                
+                outputStream.write(buffer, 0, bytesRead)
+                totalBytesRead += bytesRead
+                
+                if (showProgress) {
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastProgressTime >= 500) {
+                        val progress = ((totalBytesRead * 100) / contentLength).toInt()
+                        val timeDiff = (currentTime - lastProgressTime) / 1000.0
+                        val bytesDiff = totalBytesRead - lastBytesRead
+                        speed = formatSpeed((bytesDiff / timeDiff).toLong())
                         
-                        output.write(buffer, 0, bytesRead)
-                        downloadedBytes += bytesRead
+                        emit(DownloadStatus.Progress(progress, speed))
                         
-                        // 计算进度和速度
-                        val currentTime = System.currentTimeMillis()
-                        if (currentTime - lastUpdateTime >= PROGRESS_INTERVAL) {
-                            val progress = ((downloadedBytes * 100) / totalBytes).toInt()
-                            val timeDiff = (currentTime - lastUpdateTime) / 1000.0
-                            val bytesDiff = downloadedBytes - lastDownloadedBytes
-                            val speed = if (timeDiff > 0) bytesDiff / timeDiff else 0.0
-                            
-                            emit(DownloadStatus.Progress(
-                                progress = progress,
-                                downloadedBytes = downloadedBytes,
-                                totalBytes = totalBytes,
-                                speed = formatSpeed(speed)
-                            ))
-                            
-                            lastUpdateTime = currentTime
-                            lastDownloadedBytes = downloadedBytes
-                        }
+                        lastProgressTime = currentTime
+                        lastBytesRead = totalBytesRead
                     }
                 }
             }
             
-            // 下载完成，重命名文件
-            tempFile.renameTo(file)
-            emit(DownloadStatus.Success)
+            outputStream.flush()
+            outputStream.close()
+            inputStream.close()
+            
+            if (totalBytesRead < contentLength) {
+                file.delete()
+                emit(DownloadStatus.Error("下载不完整"))
+                return@flow
+            }
+            
+            Log.i(TAG, "下载完成: ${file.absolutePath}, 大小: ${file.length()} bytes")
+            emit(DownloadStatus.Success(file.absolutePath))
             
         } catch (e: Exception) {
-            if (!isCancelled) {
-                emit(DownloadStatus.Error("下载失败: ${e.message}"))
+            Log.e(TAG, "下载失败: ${e.message}", e)
+            if (isCancelled) {
+                emit(DownloadStatus.Cancelled)
+            } else {
+                emit(DownloadStatus.Error(getErrorMessage(e)))
             }
         } finally {
             currentConnection?.disconnect()
@@ -142,52 +152,65 @@ class DownloadManager(private val context: Context) {
     }.flowOn(Dispatchers.IO)
 
     /**
-     * 获取文件信息
+     * 跟随重定向
      */
-    private fun getFileInfo(url: String): Pair<Long, Boolean> {
-        val connection = URL(url).openConnection() as HttpURLConnection
-        connection.apply {
-            requestMethod = "HEAD"
-            connectTimeout = 10000
-            readTimeout = 10000
-        }
+    private fun followRedirects(url: String): String {
+        var currentUrl = url
+        var redirects = 0
         
-        return try {
-            val contentLength = connection.getHeaderField("Content-Length")?.toLongOrNull() ?: -1L
-            val acceptRanges = connection.getHeaderField("Accept-Ranges")
-            val supportsResume = acceptRanges == "bytes"
-            Pair(contentLength, supportsResume)
-        } finally {
-            connection.disconnect()
-        }
-    }
-
-    /**
-     * 创建连接
-     */
-    private fun createConnection(url: String, startBytes: Long): HttpURLConnection {
-        val connection = URL(url).openConnection() as HttpURLConnection
-        connection.apply {
-            connectTimeout = 30000
-            readTimeout = 30000
-            setRequestProperty("User-Agent", "Acuspic-Android")
+        while (redirects < MAX_REDIRECTS) {
+            val connection = URL(currentUrl).openConnection() as HttpURLConnection
+            connection.instanceFollowRedirects = false
+            connection.requestMethod = "HEAD"
+            connection.connectTimeout = 10000
+            connection.readTimeout = 10000
             
-            if (startBytes > 0) {
-                setRequestProperty("Range", "bytes=$startBytes-")
+            try {
+                connection.connect()
+                val responseCode = connection.responseCode
+                
+                if (responseCode == HttpURLConnection.HTTP_MOVED_PERM ||
+                    responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
+                    responseCode == HttpURLConnection.HTTP_SEE_OTHER) {
+                    val location = connection.getHeaderField("Location")
+                    if (location != null) {
+                        currentUrl = location
+                        redirects++
+                        Log.d(TAG, "重定向 #$redirects: $currentUrl")
+                        continue
+                    }
+                }
+                
+                break
+            } finally {
+                connection.disconnect()
             }
         }
-        return connection
+        
+        return currentUrl
     }
 
     /**
-     * 格式化速度
+     * 格式化下载速度
      */
-    private fun formatSpeed(bytesPerSecond: Double): String {
-        val df = DecimalFormat("0.00")
+    private fun formatSpeed(bytesPerSecond: Long): String {
         return when {
-            bytesPerSecond >= 1024 * 1024 -> "${df.format(bytesPerSecond / (1024 * 1024))} MB/s"
-            bytesPerSecond >= 1024 -> "${df.format(bytesPerSecond / 1024)} KB/s"
-            else -> "${df.format(bytesPerSecond)} B/s"
+            bytesPerSecond >= 1024 * 1024 -> String.format("%.1f MB/s", bytesPerSecond / (1024.0 * 1024.0))
+            bytesPerSecond >= 1024 -> String.format("%.1f KB/s", bytesPerSecond / 1024.0)
+            else -> "$bytesPerSecond B/s"
+        }
+    }
+
+    /**
+     * 获取友好的错误信息
+     */
+    private fun getErrorMessage(e: Exception): String {
+        return when (e) {
+            is java.net.SocketTimeoutException -> "连接超时，请检查网络"
+            is java.net.UnknownHostException -> "无法连接服务器，请检查网络"
+            is java.net.ConnectException -> "网络连接失败"
+            is java.io.IOException -> "网络错误: ${e.message}"
+            else -> "下载失败: ${e.message}"
         }
     }
 
@@ -197,43 +220,50 @@ class DownloadManager(private val context: Context) {
     fun cancel() {
         isCancelled = true
         currentConnection?.disconnect()
+        currentConnection = null
     }
 
     /**
      * 获取已下载的文件
      */
     fun getDownloadedFile(fileName: String): File? {
-        val downloadDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), DOWNLOAD_DIR)
-        val file = File(downloadDir, fileName)
+        val file = File(getDownloadDir(), fileName)
         return if (file.exists()) file else null
     }
 
     /**
-     * 删除下载的文件
+     * 删除已下载的文件
      */
-    fun deleteDownloadedFile(fileName: String): Boolean {
-        val downloadDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), DOWNLOAD_DIR)
-        val file = File(downloadDir, fileName)
-        val tempFile = File(downloadDir, "$fileName.tmp")
-        
-        var deleted = true
+    fun deleteDownloadedFile(fileName: String) {
+        val file = File(getDownloadDir(), fileName)
         if (file.exists()) {
-            deleted = deleted && file.delete()
+            file.delete()
+            Log.i(TAG, "已删除文件: $fileName")
         }
-        if (tempFile.exists()) {
-            deleted = deleted && tempFile.delete()
-        }
-        return deleted
     }
 
     /**
-     * 获取下载目录
+     * 获取下载目录大小
      */
-    fun getDownloadDirectory(): File {
-        val downloadDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), DOWNLOAD_DIR)
-        if (!downloadDir.exists()) {
-            downloadDir.mkdirs()
+    fun getDownloadDirSize(): Long {
+        val dir = getDownloadDir()
+        if (!dir.exists()) return 0
+        
+        return dir.walkTopDown()
+            .filter { it.isFile }
+            .map { it.length() }
+            .sum()
+    }
+
+    /**
+     * 清空下载目录
+     */
+    fun clearDownloadDir() {
+        val dir = getDownloadDir()
+        if (dir.exists()) {
+            dir.deleteRecursively()
+            dir.mkdirs()
+            Log.i(TAG, "已清空下载目录")
         }
-        return downloadDir
     }
 }

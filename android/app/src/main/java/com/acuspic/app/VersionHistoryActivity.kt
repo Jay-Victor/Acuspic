@@ -1,5 +1,7 @@
 package com.acuspic.app
 
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.CheckBox
@@ -7,13 +9,16 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.acuspic.app.update.UpdateManager
 import com.acuspic.app.update.VersionHistory
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
 import java.io.File
 
 class VersionHistoryActivity : AppCompatActivity() {
@@ -35,6 +40,12 @@ class VersionHistoryActivity : AppCompatActivity() {
     private lateinit var adapter: VersionHistoryAdapter
     private val selectedVersions = mutableSetOf<VersionHistory>()
 
+    private val installPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { _ ->
+        handleInstallPermissionResult()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_version_history)
@@ -44,6 +55,11 @@ class VersionHistoryActivity : AppCompatActivity() {
         initViews()
         setupListeners()
         loadVersionHistory()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkPendingInstall()
     }
 
     private fun initViews() {
@@ -210,6 +226,67 @@ class VersionHistoryActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun tryInstallApk(file: File) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!packageManager.canRequestPackageInstalls()) {
+                requestInstallPermission(file)
+                return
+            }
+        }
+        
+        MaterialAlertDialogBuilder(this)
+            .setTitle("安装版本")
+            .setMessage("是否安装此版本？")
+            .setPositiveButton("安装") { _, _ ->
+                updateManager.installApk(file)
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun requestInstallPermission(file: File) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!packageManager.canRequestPackageInstalls()) {
+                MaterialAlertDialogBuilder(this)
+                    .setTitle("需要权限")
+                    .setMessage("安装应用需要授权\"安装未知来源应用\"权限，是否前往设置？")
+                    .setPositiveButton("去设置") { _, _ ->
+                        val intent = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
+                        intent.data = android.net.Uri.parse("package:$packageName")
+                        installPermissionLauncher.launch(intent)
+                    }
+                    .setNegativeButton("取消", null)
+                    .show()
+            }
+        }
+    }
+
+    private fun handleInstallPermissionResult() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val hasPermission = packageManager.canRequestPackageInstalls()
+            
+            if (hasPermission) {
+                Toast.makeText(this, "授权成功", Toast.LENGTH_SHORT).show()
+                checkPendingInstall()
+            } else {
+                Toast.makeText(this, "需要授权才能安装应用", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun checkPendingInstall() {
+        val file = updateManager.getPendingInstallFile()
+        if (file != null && file.exists()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (packageManager.canRequestPackageInstalls()) {
+                    tryInstallApk(file)
+                }
+            } else {
+                tryInstallApk(file)
+            }
+        }
+    }
+
     inner class VersionHistoryAdapter(
         private val versions: MutableList<VersionHistory>,
         private val onSelectionChanged: (VersionHistory, Boolean) -> Unit
@@ -267,8 +344,13 @@ class VersionHistoryActivity : AppCompatActivity() {
             }
 
             holder.btnRollback.setOnClickListener {
-                updateManager.rollbackToVersion(version.versionName)
-                Toast.makeText(this@VersionHistoryActivity, "开始回退到 v${version.versionName}", Toast.LENGTH_SHORT).show()
+                val success = updateManager.rollbackToVersion(version.versionName)
+                if (success) {
+                    val file = updateManager.getPendingInstallFile()
+                    if (file != null) {
+                        tryInstallApk(file)
+                    }
+                }
             }
         }
 
@@ -294,15 +376,12 @@ class VersionHistoryActivity : AppCompatActivity() {
                 .setTitle("删除版本")
                 .setMessage("确定要删除 v${version.versionName} 吗？")
                 .setPositiveButton("删除") { _, _ ->
-                    // 先删除文件和记录
                     updateManager.deleteVersion(version)
                     
-                    // 从列表中移除
                     versions.removeAt(position)
                     selectedItems.remove(position)
                     selectedVersions.remove(version)
                     
-                    // 更新选中项的位置索引
                     val newSelectedItems = mutableSetOf<Int>()
                     selectedItems.forEach { idx ->
                         if (idx > position) {
@@ -314,15 +393,12 @@ class VersionHistoryActivity : AppCompatActivity() {
                     selectedItems.clear()
                     selectedItems.addAll(newSelectedItems)
                     
-                    // 通知适配器更新（使用内部类的notifyItemRemoved方法）
                     notifyItemRemoved(position)
                     notifyItemRangeChanged(position, versions.size)
                     
-                    // 更新存储摘要和批量操作栏
                     this@VersionHistoryActivity.updateStorageSummary()
                     this@VersionHistoryActivity.updateBatchActionBar()
                     
-                    // 如果列表为空，重新加载显示空视图
                     if (versions.isEmpty()) {
                         this@VersionHistoryActivity.loadVersionHistory()
                     }

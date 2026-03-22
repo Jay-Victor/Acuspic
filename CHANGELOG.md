@@ -7,6 +7,37 @@
 
 ---
 
+## [1.0.4] - 2026-03-22
+
+### Bug修复
+
+- 🐛 **修复APK安装权限检查流程** - Android 8.0+ 正确请求安装未知来源应用权限
+- 🐛 **修复权限授权后无法继续安装** - 使用 ActivityResultLauncher 处理权限授权结果
+- 🐛 **修复版本回退功能缺少返回值** - `rollbackToVersion()` 方法添加正确的返回语句
+
+### 功能优化
+
+- 🔧 **新增 Android 11+ 包可见性声明** - 在 AndroidManifest.xml 中添加 `<queries>` 元素
+- 🔧 **使用 ActivityResultLauncher** - 替代旧的 `startActivityForResult` 方式处理权限请求
+- 🔧 **新增 InstallStatus 状态管理** - 优化安装流程状态跟踪
+
+### 技术改进
+
+- 📝 SettingsActivity.kt - 添加 `installPermissionLauncher` 处理安装权限
+- 📝 VersionHistoryActivity.kt - 添加 `installPermissionLauncher` 处理安装权限
+- 📝 UpdateManager.kt - 新增 `InstallStatus` 密封类管理安装状态
+- 📝 AndroidManifest.xml - 添加 APK 安装相关 Intent 的 queries 声明
+
+### 权限适配说明
+
+| Android 版本 | 权限要求 | 处理方式 |
+|-------------|---------|---------|
+| 7.0+ | FileProvider | 使用 FileProvider 共享 APK 文件 |
+| 8.0+ | REQUEST_INSTALL_PACKAGES | 检查 `canRequestPackageInstalls()` |
+| 11+ | 包可见性 | 声明 `<queries>` 元素 |
+
+---
+
 ## [1.0.3] - 2026-03-22
 
 ### Bug修复
@@ -164,5 +195,8 @@
 
 ---
 
+[1.0.4]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.4
+[1.0.3]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.3
+[1.0.2]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.2
 [1.0.1]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.1
 [1.0.0]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.0

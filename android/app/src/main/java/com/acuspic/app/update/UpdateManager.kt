@@ -1,14 +1,10 @@
 package com.acuspic.app.update
 
-import android.app.DownloadManager
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.FileProvider
@@ -19,10 +15,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 
-/**
- * 更新管理器
- * 统一管理版本检查、下载、安装等功能
- */
 class UpdateManager(private val context: Context) {
 
     private val versionChecker = VersionChecker(context)
@@ -30,32 +22,23 @@ class UpdateManager(private val context: Context) {
     private val historyManager = VersionHistoryManager(context)
     private val scope = CoroutineScope(Dispatchers.Main)
 
-    // 下载状态
     private val _downloadStatus = MutableStateFlow<DownloadStatus>(DownloadStatus.Idle)
     val downloadStatus: StateFlow<DownloadStatus> = _downloadStatus
 
-    // 当前下载任务
     private var currentDownloadJob: kotlinx.coroutines.Job? = null
+    private var pendingInstallFile: File? = null
 
     companion object {
         private const val TAG = "UpdateManager"
         
-        // 当前版本配置 - 必须与 build.gradle.kts 保持一致
-        const val CURRENT_VERSION_CODE = 4
-        const val CURRENT_VERSION_NAME = "1.0.3"
+        const val CURRENT_VERSION_CODE = 5
+        const val CURRENT_VERSION_NAME = "1.0.4"
         
-        // APK文件名（使用大写Apk避免微信/QQ添加.1后缀）
         fun getApkFileName(versionName: String = CURRENT_VERSION_NAME): String {
             return "Acuspic-v$versionName.Apk"
         }
     }
 
-    /**
-     * 检查更新
-     * @param repositoryType 仓库类型
-     * @param showNoUpdateToast 是否显示"已是最新版本"提示
-     * @param callback 检查结果回调
-     */
     fun checkUpdate(
         repositoryType: RepositoryType = RepositoryType.AUTO,
         showNoUpdateToast: Boolean = false,
@@ -66,7 +49,6 @@ class UpdateManager(private val context: Context) {
             
             when (result) {
                 is UpdateCheckResult.HasUpdate -> {
-                    // 检查是否已跳过此版本
                     val skippedVersion = versionChecker.getSkippedVersion()
                     if (skippedVersion == result.versionInfo.versionCode && !result.isForceUpdate) {
                         if (showNoUpdateToast) {
@@ -91,20 +73,14 @@ class UpdateManager(private val context: Context) {
         }
     }
 
-    /**
-     * 下载并安装更新
-     * @param versionInfo 版本信息
-     */
     fun downloadAndInstall(versionInfo: VersionInfo) {
         if (versionInfo.downloadUrl.isEmpty()) {
             Toast.makeText(context, "下载地址无效", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // 生成文件名
         val fileName = "Acuspic-v${versionInfo.versionName}.Apk"
         
-        // 添加到版本历史
         historyManager.addVersionHistory(
             VersionHistory(
                 versionCode = versionInfo.versionCode,
@@ -115,7 +91,6 @@ class UpdateManager(private val context: Context) {
             )
         )
 
-        // 开始下载
         currentDownloadJob = scope.launch {
             downloadManager.download(versionInfo.downloadUrl, fileName, true)
                 .collect { status ->
@@ -123,15 +98,17 @@ class UpdateManager(private val context: Context) {
                     
                     when (status) {
                         is DownloadStatus.Success -> {
-                            // 更新下载状态
                             historyManager.updateDownloadStatus(
                                 versionInfo.versionCode,
                                 true,
                                 downloadManager.getDownloadedFile(fileName)?.absolutePath
                             )
                             
-                            // 安装APK
-                            installApk(fileName)
+                            val file = downloadManager.getDownloadedFile(fileName)
+                            if (file != null && file.exists()) {
+                                pendingInstallFile = file
+                                _installStatus.value = InstallStatus.ReadyToInstall(file)
+                            }
                         }
                         is DownloadStatus.Error -> {
                             Toast.makeText(context, status.message, Toast.LENGTH_LONG).show()
@@ -142,26 +119,65 @@ class UpdateManager(private val context: Context) {
         }
     }
 
-    /**
-     * 安装APK
-     * 支持 Android 7.0+ 的 FileProvider 和 Android 8.0+ 的安装权限
-     */
-    private fun installApk(fileName: String) {
-        try {
-            val file = downloadManager.getDownloadedFile(fileName)
-            if (file == null || !file.exists()) {
-                Log.e(TAG, "APK文件不存在: $fileName")
+    private val _installStatus = MutableStateFlow<InstallStatus>(InstallStatus.Idle)
+    val installStatus: StateFlow<InstallStatus> = _installStatus
+
+    sealed class InstallStatus {
+        object Idle : InstallStatus()
+        data class NeedPermission(val file: File) : InstallStatus()
+        data class ReadyToInstall(val file: File) : InstallStatus()
+        object Installing : InstallStatus()
+        data class Error(val message: String) : InstallStatus()
+    }
+
+    fun getPendingInstallFile(): File? = pendingInstallFile
+
+    fun clearPendingInstall() {
+        pendingInstallFile = null
+        _installStatus.value = InstallStatus.Idle
+    }
+
+    fun checkAndPrepareInstall(): File? {
+        val file = pendingInstallFile
+        if (file == null || !file.exists()) {
+            Log.e(TAG, "没有待安装的文件")
+            return null
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!context.packageManager.canRequestPackageInstalls()) {
+                Log.w(TAG, "需要请求安装权限")
+                _installStatus.value = InstallStatus.NeedPermission(file)
+                return null
+            }
+        }
+
+        return file
+    }
+
+    fun installApk(file: File): Boolean {
+        return try {
+            if (!file.exists()) {
+                Log.e(TAG, "APK文件不存在: ${file.absolutePath}")
                 Toast.makeText(context, "安装文件不存在", Toast.LENGTH_LONG).show()
-                return
+                _installStatus.value = InstallStatus.Error("安装文件不存在")
+                return false
             }
             
             Log.i(TAG, "开始安装APK: ${file.absolutePath}, 大小: ${file.length()} bytes")
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (!context.packageManager.canRequestPackageInstalls()) {
+                    Log.w(TAG, "没有安装未知来源应用的权限")
+                    _installStatus.value = InstallStatus.NeedPermission(file)
+                    return false
+                }
+            }
             
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    // Android 7.0+ 使用FileProvider
                     val uri = FileProvider.getUriForFile(
                         context,
                         "${context.packageName}.fileprovider",
@@ -180,45 +196,39 @@ class UpdateManager(private val context: Context) {
                 }
             }
             
-            // 验证Intent是否可解析
             val packageManager = context.packageManager
             val activities = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
             if (activities.isNullOrEmpty()) {
                 Log.e(TAG, "无法找到处理APK安装的应用")
                 Toast.makeText(context, "无法打开安装界面", Toast.LENGTH_LONG).show()
-                return
+                _installStatus.value = InstallStatus.Error("无法打开安装界面")
+                return false
             }
             
             Log.i(TAG, "启动安装界面...")
+            _installStatus.value = InstallStatus.Installing
             context.startActivity(intent)
+            true
             
         } catch (e: Exception) {
             Log.e(TAG, "安装APK失败: ${e.message}", e)
             Toast.makeText(context, "安装失败: ${e.message}", Toast.LENGTH_LONG).show()
+            _installStatus.value = InstallStatus.Error(e.message ?: "未知错误")
+            false
         }
     }
 
-    /**
-     * 取消下载
-     */
     fun cancelDownload() {
         currentDownloadJob?.cancel()
         downloadManager.cancel()
         _downloadStatus.value = DownloadStatus.Cancelled
     }
 
-    /**
-     * 跳过当前版本
-     */
     fun skipVersion(versionCode: Int) {
         versionChecker.setSkippedVersion(versionCode)
         Toast.makeText(context, "已跳过此版本", Toast.LENGTH_SHORT).show()
     }
 
-    /**
-     * 回退到指定版本
-     * @param versionCode 目标版本号
-     */
     fun rollbackToVersion(versionCode: Int): Boolean {
         val versionHistory = historyManager.getVersionHistory(versionCode)
         
@@ -233,44 +243,19 @@ class UpdateManager(private val context: Context) {
             return false
         }
         
-        // 安装旧版本
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                val uri = FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    file
-                )
-                setDataAndType(uri, "application/vnd.android.package-archive")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            } else {
-                setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive")
-            }
-        }
-        
-        context.startActivity(intent)
+        pendingInstallFile = file
+        _installStatus.value = InstallStatus.ReadyToInstall(file)
         return true
     }
 
-    /**
-     * 获取版本历史列表
-     */
     fun getVersionHistory(): List<VersionHistory> {
         return historyManager.getVersionHistory()
     }
 
-    /**
-     * 获取已下载的版本列表
-     */
     fun getDownloadedVersions(): List<VersionHistory> {
         return historyManager.getDownloadedVersions()
     }
 
-    /**
-     * 删除版本文件
-     */
     fun deleteVersionFile(versionCode: Int) {
         val versionHistory = historyManager.getVersionHistory(versionCode)
         versionHistory?.let {
@@ -280,18 +265,12 @@ class UpdateManager(private val context: Context) {
         }
     }
 
-    /**
-     * 删除版本（接受VersionHistory对象）
-     */
     fun deleteVersion(version: VersionHistory) {
         val fileName = "Acuspic-v${version.versionName}.Apk"
         downloadManager.deleteDownloadedFile(fileName)
         historyManager.updateDownloadStatus(version.versionCode, false, null)
     }
 
-    /**
-     * 回退到指定版本（接受版本名）
-     */
     fun rollbackToVersion(versionName: String): Boolean {
         val versionHistory = historyManager.getVersionHistory().find { it.versionName == versionName }
             ?: run {
@@ -301,9 +280,6 @@ class UpdateManager(private val context: Context) {
         return rollbackToVersion(versionHistory.versionCode)
     }
 
-    /**
-     * 清除所有下载文件
-     */
     fun clearAllDownloads() {
         val downloadedVersions = historyManager.getDownloadedVersions()
         downloadedVersions.forEach { version ->
@@ -313,24 +289,15 @@ class UpdateManager(private val context: Context) {
         historyManager.clearVersionHistory()
     }
 
-    /**
-     * 获取当前版本信息
-     */
     fun getCurrentVersionInfo(): String {
         return "v$CURRENT_VERSION_NAME"
     }
 
-    /**
-     * 设置仓库类型
-     */
     fun setRepositoryType(type: RepositoryType) {
         val prefs = context.getSharedPreferences("UpdatePrefs", Context.MODE_PRIVATE)
         prefs.edit().putString("repository_type", type.name).apply()
     }
 
-    /**
-     * 获取仓库类型
-     */
     fun getRepositoryType(): RepositoryType {
         val prefs = context.getSharedPreferences("UpdatePrefs", Context.MODE_PRIVATE)
         val typeName = prefs.getString("repository_type", RepositoryType.AUTO.name)

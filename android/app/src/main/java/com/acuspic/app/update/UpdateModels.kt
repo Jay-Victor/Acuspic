@@ -51,8 +51,9 @@ data class VersionHistory(
  */
 sealed class DownloadStatus {
     object Idle : DownloadStatus()
-    data class Progress(val progress: Int, val downloadedBytes: Long, val totalBytes: Long, val speed: String) : DownloadStatus()
-    object Success : DownloadStatus()
+    object Connecting : DownloadStatus()
+    data class Progress(val progress: Int, val speed: String) : DownloadStatus()
+    data class Success(val filePath: String) : DownloadStatus()
     data class Error(val message: String) : DownloadStatus()
     object Cancelled : DownloadStatus()
 }

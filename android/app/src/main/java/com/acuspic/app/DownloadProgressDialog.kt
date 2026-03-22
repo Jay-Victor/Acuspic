@@ -76,9 +76,22 @@ class DownloadProgressDialog(context: Context) : Dialog(context) {
     }
     
     /**
+     * 设置连接状态
+     */
+    fun setConnecting() {
+        progressBar.isIndeterminate = true
+        tvProgress.text = "..."
+        tvStatus.text = "正在连接服务器..."
+        tvSpeed.text = ""
+        isDownloading = true
+        updateButtonState()
+    }
+    
+    /**
      * 设置下载完成状态
      */
     fun setComplete() {
+        progressBar.isIndeterminate = false
         progressBar.progress = 100
         tvProgress.text = "100%"
         tvStatus.text = "下载完成，正在安装..."
@@ -91,6 +104,7 @@ class DownloadProgressDialog(context: Context) : Dialog(context) {
      * 设置下载失败状态
      */
     fun setError(message: String) {
+        progressBar.isIndeterminate = false
         tvStatus.text = "下载失败: $message"
         tvSpeed.text = ""
         isDownloading = false

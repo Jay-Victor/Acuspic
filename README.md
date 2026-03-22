@@ -32,7 +32,7 @@
   <img src="https://img.shields.io/badge/Language-Kotlin-orange.svg?style=flat-square&logo=kotlin" alt="Language">
   <img src="https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat-square" alt="API">
   <img src="https://img.shields.io/badge/Size-6MB-blue.svg?style=flat-square" alt="Size">
-  <img src="https://img.shields.io/badge/Version-1.0.3-purple.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.0.4-purple.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/License-Custom-9cf.svg?style=flat-square" alt="License">
 </p>
 
@@ -646,6 +646,38 @@ KEY_PASSWORD=你的密钥密码
 
 ### 最新版本
 
+**v1.0.4** (2026-03-22) - 安装权限优化
+
+- ✨ 新增 Android 11+ 包可见性声明
+- 🐛 修复 APK 安装权限检查流程
+- 🐛 修复权限授权后无法继续安装的问题
+- 🔧 使用 ActivityResultLauncher 处理权限请求
+- 🔧 新增 InstallStatus 状态管理
+
+<details>
+<summary>历史版本</summary>
+
+**v1.0.3** (2026-03-22) - 更新机制修复
+
+- 🐛 修复 Android 8.0+ APK 安装问题
+- 🐛 修复 FileProvider 配置
+- 🔧 优化安装流程，添加详细日志
+- 🎨 重新设计下载进度对话框 (Material Design 3)
+- ✨ 新增后台下载支持
+
+**v1.0.2** (2026-03-22) - 版本比较修复
+
+- 🐛 修复语义版本比较逻辑
+- 🐛 修复版本历史删除 UI 不更新
+- 🔧 新增网络重试机制（最多3次）
+- 🔧 新增 GitHub 失败自动切换 Gitee
+
+**v1.0.1** (2026-03-22) - 代码质量提升
+
+- 🐛 修复异常处理（`e.printStackTrace()` → `Log.e()`）
+- 🔧 新增 Timber 日志库
+- 🔧 新增 EditorConfig 代码风格配置
+
 **v1.0.0** (2026-03-21) - 首次发布
 
 - ✨ Markdown 编辑器核心功能
@@ -655,6 +687,8 @@ KEY_PASSWORD=你的密钥密码
 - ✨ 双源更新系统
 - ✨ Material Design 3 界面
 - ✨ 深色主题支持
+
+</details>
 
 ---
 
@@ -1390,6 +1424,17 @@ cd Acuspic
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 ### Latest Version
+
+**v1.0.4** (2026-03-22) - Install Permission Optimization
+
+- ✨ Added Android 11+ package visibility declaration
+- 🐛 Fixed APK install permission check flow
+- 🐛 Fixed issue where install couldn't continue after permission grant
+- 🔧 Use ActivityResultLauncher for permission requests
+- 🔧 Added InstallStatus state management
+
+<details>
+<summary>Previous Versions</summary>
 
 **v1.0.3** (2026-03-22) - Update Mechanism Fix
 

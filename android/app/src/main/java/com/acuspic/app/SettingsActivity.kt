@@ -1,25 +1,32 @@
 package com.acuspic.app
 
+import android.app.Activity
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.acuspic.app.imagehost.ImageHostPreferences
 import com.acuspic.app.markdown.MarkdownFlavor
 import com.acuspic.app.markdown.MarkdownPreferences
+import com.acuspic.app.update.DownloadStatus
 import com.acuspic.app.update.RepositoryType
 import com.acuspic.app.update.UpdateCheckResult
 import com.acuspic.app.update.UpdateManager
+import com.acuspic.app.update.VersionInfo
 import kotlinx.coroutines.launch
+import java.io.File
 
-/**
- * 设置页面
- */
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var updateManager: UpdateManager
@@ -31,12 +38,24 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var tvCurrentMarkdownFlavor: TextView
     private lateinit var tvCurrentImageHost: TextView
     private lateinit var btnCheckUpdate: LinearLayout
+    private lateinit var tvUpdateStatus: TextView
+    private lateinit var progressUpdate: LinearProgressIndicator
     private lateinit var btnVersionHistory: LinearLayout
     private lateinit var btnRepositorySettings: LinearLayout
     private lateinit var btnMarkdownFlavor: LinearLayout
     private lateinit var btnImageHost: LinearLayout
     private lateinit var btnAbout: LinearLayout
     private lateinit var btnLicense: LinearLayout
+
+    private var isCheckingUpdate = false
+    private var currentVersionInfo: VersionInfo? = null
+    private var downloadProgressDialog: DownloadProgressDialog? = null
+
+    private val installPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        handleInstallPermissionResult()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,8 +70,12 @@ class SettingsActivity : AppCompatActivity() {
         updateUI()
     }
 
+    override fun onResume() {
+        super.onResume()
+        checkPendingInstall()
+    }
+
     private fun initViews() {
-        // 返回按钮
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
 
         tvCurrentVersion = findViewById(R.id.tvCurrentVersion)
@@ -60,6 +83,8 @@ class SettingsActivity : AppCompatActivity() {
         tvCurrentMarkdownFlavor = findViewById(R.id.tvCurrentMarkdownFlavor)
         tvCurrentImageHost = findViewById(R.id.tvCurrentImageHost)
         btnCheckUpdate = findViewById(R.id.btnCheckUpdate)
+        tvUpdateStatus = findViewById(R.id.tvUpdateStatus)
+        progressUpdate = findViewById(R.id.progressUpdate)
         btnVersionHistory = findViewById(R.id.btnVersionHistory)
         btnRepositorySettings = findViewById(R.id.btnRepositorySettings)
         btnMarkdownFlavor = findViewById(R.id.btnMarkdownFlavor)
@@ -69,37 +94,32 @@ class SettingsActivity : AppCompatActivity() {
     }
     
     private fun setupListeners() {
-        // 检查更新
         btnCheckUpdate.setOnClickListener {
-            checkForUpdate()
+            if (!isCheckingUpdate) {
+                checkForUpdate()
+            }
         }
         
-        // 版本历史
         btnVersionHistory.setOnClickListener {
             startActivity(Intent(this, VersionHistoryActivity::class.java))
         }
         
-        // 下载源设置
         btnRepositorySettings.setOnClickListener {
             showRepositorySelector()
         }
         
-        // Markdown语法选择
         btnMarkdownFlavor.setOnClickListener {
             showMarkdownFlavorSelector()
         }
 
-        // 图床设置
         btnImageHost.setOnClickListener {
             startActivity(Intent(this, ImageHostSettingsActivity::class.java))
         }
 
-        // 关于
         btnAbout.setOnClickListener {
             startActivity(Intent(this, AboutActivity::class.java))
         }
         
-        // 开源协议
         btnLicense.setOnClickListener {
             showLicenseDialog()
         }
@@ -123,94 +143,253 @@ class SettingsActivity : AppCompatActivity() {
     }
     
     private fun checkForUpdate() {
-        Toast.makeText(this, "正在检查更新...", Toast.LENGTH_SHORT).show()
+        if (!isNetworkAvailable()) {
+            showNoNetworkDialog()
+            return
+        }
+        
+        isCheckingUpdate = true
+        tvUpdateStatus.visibility = View.VISIBLE
+        tvUpdateStatus.text = "正在检查更新..."
+        progressUpdate.visibility = View.VISIBLE
+        progressUpdate.isIndeterminate = true
         
         updateManager.checkUpdate(
             repositoryType = updateManager.getRepositoryType(),
-            showNoUpdateToast = true
+            showNoUpdateToast = false
         ) { result ->
+            isCheckingUpdate = false
+            progressUpdate.visibility = View.GONE
+            
             when (result) {
                 is UpdateCheckResult.HasUpdate -> {
+                    tvUpdateStatus.visibility = View.GONE
                     showUpdateDialog(result)
                 }
-                else -> {
-                    // 其他情况已在UpdateManager中处理
+                is UpdateCheckResult.NoUpdate -> {
+                    tvUpdateStatus.text = "已是最新版本"
+                    tvUpdateStatus.setTextColor(getColor(com.acuspic.app.R.color.success))
+                    Toast.makeText(this, "已是最新版本", Toast.LENGTH_SHORT).show()
+                    
+                    lifecycleScope.launch {
+                        kotlinx.coroutines.delay(2000)
+                        tvUpdateStatus.visibility = View.GONE
+                    }
+                }
+                is UpdateCheckResult.Error -> {
+                    tvUpdateStatus.text = "检查失败: ${result.message}"
+                    tvUpdateStatus.setTextColor(getColor(com.acuspic.app.R.color.error))
+                    
+                    lifecycleScope.launch {
+                        kotlinx.coroutines.delay(3000)
+                        tvUpdateStatus.visibility = View.GONE
+                    }
                 }
             }
         }
+    }
+    
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+    
+    private fun showNoNetworkDialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("网络不可用")
+            .setMessage("请检查您的网络连接后重试")
+            .setPositiveButton("确定", null)
+            .show()
     }
     
     private fun showUpdateDialog(result: UpdateCheckResult.HasUpdate) {
         val versionInfo = result.versionInfo
-        val title = if (result.isForceUpdate) "重要更新" else "发现新版本"
+        currentVersionInfo = versionInfo
         
-        val message = buildString {
-            appendLine("版本: v${versionInfo.versionName}")
-            appendLine("发布时间: ${versionInfo.publishDate}")
-            appendLine()
-            appendLine("更新内容:")
-            append(versionInfo.releaseNotes)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_update_info, null)
+        val tvVersion = dialogView.findViewById<TextView>(R.id.tvVersion)
+        val tvDate = dialogView.findViewById<TextView>(R.id.tvDate)
+        val tvSize = dialogView.findViewById<TextView>(R.id.tvSize)
+        val tvNotes = dialogView.findViewById<TextView>(R.id.tvNotes)
+        val tvBadge = dialogView.findViewById<TextView>(R.id.tvBadge)
+        
+        tvVersion.text = "v${versionInfo.versionName}"
+        tvDate.text = versionInfo.publishDate.ifEmpty { "未知" }
+        tvSize.text = formatFileSize(versionInfo.fileSize)
+        tvNotes.text = formatReleaseNotes(versionInfo.releaseNotes)
+        
+        if (result.isForceUpdate) {
+            tvBadge.visibility = View.VISIBLE
+            tvBadge.text = "强制更新"
+            tvBadge.setBackgroundColor(getColor(com.acuspic.app.R.color.error))
+        } else if (versionInfo.isImportant) {
+            tvBadge.visibility = View.VISIBLE
+            tvBadge.text = "重要更新"
+            tvBadge.setBackgroundColor(getColor(com.acuspic.app.R.color.warning))
+        } else {
+            tvBadge.visibility = View.GONE
         }
         
-        MaterialAlertDialogBuilder(this)
-            .setTitle(title)
-            .setMessage(message)
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
             .setCancelable(!result.isForceUpdate)
-            .setPositiveButton("立即更新") { _, _ ->
-                showDownloadDialog(versionInfo)
+            .setPositiveButton("立即下载") { _, _ ->
+                startDownload(versionInfo)
             }
-            .apply {
-                if (!result.isForceUpdate) {
-                    setNegativeButton("稍后") { _, _ -> }
-                    setNeutralButton("跳过此版本") { _, _ ->
-                        updateManager.skipVersion(versionInfo.versionCode)
-                    }
+        
+        if (!result.isForceUpdate) {
+            dialog.setNegativeButton("稍后提醒", null)
+                .setNeutralButton("跳过此版本") { _, _ ->
+                    updateManager.skipVersion(versionInfo.versionCode)
+                    Toast.makeText(this, "已跳过此版本", Toast.LENGTH_SHORT).show()
                 }
-            }
-            .show()
+        }
+        
+        dialog.show()
     }
     
-    private fun showDownloadDialog(versionInfo: com.acuspic.app.update.VersionInfo) {
-        val dialog = DownloadProgressDialog(this)
-        dialog.setVersionInfo(versionInfo.versionName)
-        dialog.show()
+    private fun formatReleaseNotes(notes: String): String {
+        if (notes.isEmpty()) return "暂无更新说明"
+        return notes
+            .replace(Regex("#+\\s*"), "")
+            .replace(Regex("\\*\\*([^*]+)\\*\\*"), "$1")
+            .replace(Regex("-\\s*"), "• ")
+            .trim()
+    }
+    
+    private fun formatFileSize(bytes: Long): String {
+        if (bytes <= 0) return "未知"
+        val kb = bytes / 1024.0
+        val mb = kb / 1024.0
+        return when {
+            mb >= 1 -> String.format("%.1f MB", mb)
+            kb >= 1 -> String.format("%.1f KB", kb)
+            else -> "$bytes B"
+        }
+    }
+    
+    private fun startDownload(versionInfo: VersionInfo) {
+        downloadProgressDialog = DownloadProgressDialog(this)
+        downloadProgressDialog?.setVersionInfo(versionInfo.versionName)
+        downloadProgressDialog?.show()
         
-        // 开始下载
         updateManager.downloadAndInstall(versionInfo)
         
-        // 监听下载状态
         lifecycleScope.launch {
             updateManager.downloadStatus.collect { status ->
                 when (status) {
-                    is com.acuspic.app.update.DownloadStatus.Progress -> {
-                        dialog.updateProgress(status.progress, status.speed)
+                    is DownloadStatus.Progress -> {
+                        downloadProgressDialog?.updateProgress(status.progress, status.speed)
                     }
-                    is com.acuspic.app.update.DownloadStatus.Success -> {
-                        dialog.setComplete()
-                        Toast.makeText(this@SettingsActivity, "下载完成，正在安装...", Toast.LENGTH_SHORT).show()
+                    is DownloadStatus.Success -> {
+                        downloadProgressDialog?.setComplete()
                     }
-                    is com.acuspic.app.update.DownloadStatus.Error -> {
-                        dialog.setError(status.message)
+                    is DownloadStatus.Error -> {
+                        downloadProgressDialog?.setError(status.message)
                     }
-                    is com.acuspic.app.update.DownloadStatus.Cancelled -> {
-                        dialog.dismiss()
+                    is DownloadStatus.Cancelled -> {
+                        downloadProgressDialog?.dismiss()
                     }
                     else -> {}
                 }
             }
         }
         
-        dialog.setOnCancelListener {
+        downloadProgressDialog?.setOnCancelListener {
             updateManager.cancelDownload()
         }
         
-        dialog.setOnBackgroundListener {
-            Toast.makeText(this@SettingsActivity, "正在后台下载，下载完成后将自动安装", Toast.LENGTH_LONG).show()
+        downloadProgressDialog?.setOnBackgroundListener {
+            Toast.makeText(this, "正在后台下载，完成后将自动提示安装", Toast.LENGTH_LONG).show()
+        }
+
+        lifecycleScope.launch {
+            updateManager.installStatus.collect { status ->
+                when (status) {
+                    is UpdateManager.InstallStatus.ReadyToInstall -> {
+                        tryInstallApk(status.file)
+                    }
+                    is UpdateManager.InstallStatus.NeedPermission -> {
+                        requestInstallPermission(status.file)
+                    }
+                    is UpdateManager.InstallStatus.Error -> {
+                        downloadProgressDialog?.setError(status.message)
+                    }
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    private fun tryInstallApk(file: File) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!packageManager.canRequestPackageInstalls()) {
+                requestInstallPermission(file)
+                return
+            }
+        }
+        
+        downloadProgressDialog?.dismiss()
+        
+        MaterialAlertDialogBuilder(this)
+            .setTitle("安装更新")
+            .setMessage("新版本已下载完成，是否立即安装？")
+            .setPositiveButton("立即安装") { _, _ ->
+                updateManager.installApk(file)
+            }
+            .setNegativeButton("稍后安装", null)
+            .show()
+    }
+
+    private fun requestInstallPermission(file: File) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!packageManager.canRequestPackageInstalls()) {
+                downloadProgressDialog?.dismiss()
+                
+                MaterialAlertDialogBuilder(this)
+                    .setTitle("需要权限")
+                    .setMessage("安装应用需要授权\"安装未知来源应用\"权限，是否前往设置？")
+                    .setPositiveButton("去设置") { _, _ ->
+                        val intent = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
+                        intent.data = android.net.Uri.parse("package:$packageName")
+                        installPermissionLauncher.launch(intent)
+                    }
+                    .setNegativeButton("取消", null)
+                    .show()
+            }
+        }
+    }
+
+    private fun handleInstallPermissionResult() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val hasPermission = packageManager.canRequestPackageInstalls()
+            
+            if (hasPermission) {
+                Toast.makeText(this, "授权成功", Toast.LENGTH_SHORT).show()
+                checkPendingInstall()
+            } else {
+                Toast.makeText(this, "需要授权才能安装应用", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun checkPendingInstall() {
+        val file = updateManager.getPendingInstallFile()
+        if (file != null && file.exists()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (packageManager.canRequestPackageInstalls()) {
+                    tryInstallApk(file)
+                }
+            } else {
+                tryInstallApk(file)
+            }
         }
     }
     
     private fun showRepositorySelector() {
-        val options = arrayOf("自动选择", "Gitee (国内)", "GitHub (国外)")
+        val options = arrayOf("自动选择 (推荐)", "Gitee (国内加速)", "GitHub (国外)")
         val currentType = updateManager.getRepositoryType()
         val selectedIndex = when (currentType) {
             RepositoryType.AUTO -> 0
@@ -229,6 +408,12 @@ class SettingsActivity : AppCompatActivity() {
                 }
                 updateManager.setRepositoryType(newType)
                 updateUI()
+                val tip = when (newType) {
+                    RepositoryType.AUTO -> "将根据网络环境自动选择最优源"
+                    RepositoryType.GITEE -> "适合国内用户，下载速度更快"
+                    RepositoryType.GITHUB -> "适合国外用户或需要最新版本"
+                }
+                Toast.makeText(this, tip, Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             }
             .setNegativeButton("取消", null)
