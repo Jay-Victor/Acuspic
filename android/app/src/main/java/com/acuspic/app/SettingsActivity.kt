@@ -65,7 +65,7 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
         
-        updateManager = UpdateManager(this)
+        updateManager = UpdateManager.getInstance(this)
         markdownPreferences = MarkdownPreferences(this)
         imageHostPreferences = ImageHostPreferences(this)
 
@@ -292,6 +292,12 @@ class SettingsActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 updateManager.downloadStatus.collect { status ->
                     when (status) {
+                        is DownloadStatus.Idle -> {
+                            // 初始状态，不显示进度
+                        }
+                        is DownloadStatus.Connecting -> {
+                            downloadProgressDialog?.setConnecting()
+                        }
                         is DownloadStatus.Progress -> {
                             downloadProgressDialog?.updateProgress(status.progress, status.speed)
                         }
@@ -305,7 +311,6 @@ class SettingsActivity : AppCompatActivity() {
                             downloadProgressDialog?.dismiss()
                             downloadProgressDialog = null
                         }
-                        else -> {}
                     }
                 }
             }

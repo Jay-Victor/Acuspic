@@ -20,7 +20,7 @@ class AboutActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_about)
 
-        updateManager = UpdateManager(this)
+        updateManager = UpdateManager.getInstance(this)
 
         initViews()
     }

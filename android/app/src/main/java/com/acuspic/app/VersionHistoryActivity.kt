@@ -50,7 +50,7 @@ class VersionHistoryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_version_history)
 
-        updateManager = UpdateManager(this)
+        updateManager = UpdateManager.getInstance(this)
 
         initViews()
         setupListeners()

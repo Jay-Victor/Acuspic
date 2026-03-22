@@ -15,7 +15,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 
-class UpdateManager(private val context: Context) {
+/**
+ * 更新管理器 - 单例模式
+ * 负责版本检查、下载、安装等更新相关功能
+ */
+class UpdateManager private constructor(private val context: Context) {
 
     private val versionChecker = VersionChecker(context)
     private val downloadManager = DownloadManager(context)
@@ -25,14 +29,31 @@ class UpdateManager(private val context: Context) {
     private val _downloadStatus = MutableStateFlow<DownloadStatus>(DownloadStatus.Idle)
     val downloadStatus: StateFlow<DownloadStatus> = _downloadStatus
 
+    private val _installStatus = MutableStateFlow<InstallStatus>(InstallStatus.Idle)
+    val installStatus: StateFlow<InstallStatus> = _installStatus
+
     private var currentDownloadJob: kotlinx.coroutines.Job? = null
     private var pendingInstallFile: File? = null
 
     companion object {
         private const val TAG = "UpdateManager"
         
-        const val CURRENT_VERSION_CODE = 6
-        const val CURRENT_VERSION_NAME = "1.0.5"
+        const val CURRENT_VERSION_CODE = 7
+        const val CURRENT_VERSION_NAME = "1.0.6"
+        
+        @Volatile
+        private var instance: UpdateManager? = null
+        
+        /**
+         * 获取 UpdateManager 单例实例
+         */
+        fun getInstance(context: Context): UpdateManager {
+            return instance ?: synchronized(this) {
+                instance ?: UpdateManager(context.applicationContext).also {
+                    instance = it
+                }
+            }
+        }
         
         fun getApkFileName(versionName: String = CURRENT_VERSION_NAME): String {
             return "Acuspic-v$versionName.Apk"
@@ -79,6 +100,11 @@ class UpdateManager(private val context: Context) {
             return
         }
 
+        // 重置状态
+        _downloadStatus.value = DownloadStatus.Idle
+        _installStatus.value = InstallStatus.Idle
+        pendingInstallFile = null
+
         val fileName = "Acuspic-v${versionInfo.versionName}.Apk"
         
         historyManager.addVersionHistory(
@@ -118,9 +144,6 @@ class UpdateManager(private val context: Context) {
                 }
         }
     }
-
-    private val _installStatus = MutableStateFlow<InstallStatus>(InstallStatus.Idle)
-    val installStatus: StateFlow<InstallStatus> = _installStatus
 
     sealed class InstallStatus {
         object Idle : InstallStatus()

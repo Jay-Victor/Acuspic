@@ -7,6 +7,30 @@
 
 ---
 
+## [1.0.6] - 2026-03-22
+
+### Bug修复
+
+- 🐛 **修复下载进度不显示问题** - 将 UpdateManager 改为单例模式，确保所有 Activity 共享同一个下载状态
+- 🐛 **修复 StateFlow 状态不同步问题** - 使用单例模式后，下载状态在应用全局保持一致
+- 🐛 **修复 Activity 切换后无法获取下载进度问题** - 单例模式确保即使用户离开设置页面再回来，也能正确显示下载进度
+
+### 功能优化
+
+- 🔧 **UpdateManager 单例模式** - 使用双重检查锁定实现线程安全的单例
+- 🔧 **统一状态管理** - 所有 Activity 共享同一个 `downloadStatus` 和 `installStatus` StateFlow
+- 🔧 **优化资源清理** - 在 `onDestroy` 中正确清理对话框资源
+
+### 技术改进
+
+- 📝 UpdateManager.kt - 改为单例模式，添加 `getInstance()` 方法
+- 📝 SettingsActivity.kt - 使用 `UpdateManager.getInstance(this)`
+- 📝 VersionHistoryActivity.kt - 使用 `UpdateManager.getInstance(this)`
+- 📝 AboutActivity.kt - 使用 `UpdateManager.getInstance(this)`
+- 📝 DownloadProgressDialog.kt - 修复视图初始化问题，添加 `pendingVersionName` 机制
+
+---
+
 ## [1.0.5] - 2026-03-22
 
 ### Bug修复
@@ -217,6 +241,7 @@
 
 ---
 
+[1.0.6]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.6
 [1.0.5]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.5
 [1.0.4]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.4
 [1.0.3]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.3

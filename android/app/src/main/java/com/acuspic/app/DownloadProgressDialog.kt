@@ -23,7 +23,9 @@ class DownloadProgressDialog(context: Context) : Dialog(context) {
     private lateinit var btnBackground: MaterialButton
 
     private var isDownloading = true
+    private var onCancelListener: (() -> Unit)? = null
     private var onBackgroundListener: (() -> Unit)? = null
+    private var pendingVersionName: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +35,12 @@ class DownloadProgressDialog(context: Context) : Dialog(context) {
         setCanceledOnTouchOutside(false)
         
         initViews()
+        
+        // 如果有待设置的版本名称，现在设置
+        pendingVersionName?.let {
+            tvVersionInfo.text = "Acuspic v$it"
+            pendingVersionName = null
+        }
     }
     
     private fun initViews() {
@@ -45,7 +53,8 @@ class DownloadProgressDialog(context: Context) : Dialog(context) {
         btnBackground = findViewById(R.id.btnBackground)
         
         btnCancel.setOnClickListener {
-            cancel()
+            onCancelListener?.invoke()
+            dismiss()
         }
         
         btnBackground.setOnClickListener {
@@ -58,7 +67,11 @@ class DownloadProgressDialog(context: Context) : Dialog(context) {
      * 设置版本信息
      */
     fun setVersionInfo(versionName: String) {
-        tvVersionInfo.text = "Acuspic v$versionName"
+        if (::tvVersionInfo.isInitialized) {
+            tvVersionInfo.text = "Acuspic v$versionName"
+        } else {
+            pendingVersionName = versionName
+        }
     }
     
     /**
@@ -67,6 +80,9 @@ class DownloadProgressDialog(context: Context) : Dialog(context) {
      * @param speed 下载速度
      */
     fun updateProgress(progress: Int, speed: String) {
+        if (!::progressBar.isInitialized) return
+        
+        progressBar.isIndeterminate = false
         progressBar.progress = progress
         tvProgress.text = "$progress%"
         tvSpeed.text = speed
@@ -79,6 +95,8 @@ class DownloadProgressDialog(context: Context) : Dialog(context) {
      * 设置连接状态
      */
     fun setConnecting() {
+        if (!::progressBar.isInitialized) return
+        
         progressBar.isIndeterminate = true
         tvProgress.text = "..."
         tvStatus.text = "正在连接服务器..."
@@ -91,6 +109,8 @@ class DownloadProgressDialog(context: Context) : Dialog(context) {
      * 设置下载完成状态
      */
     fun setComplete() {
+        if (!::progressBar.isInitialized) return
+        
         progressBar.isIndeterminate = false
         progressBar.progress = 100
         tvProgress.text = "100%"
@@ -104,11 +124,20 @@ class DownloadProgressDialog(context: Context) : Dialog(context) {
      * 设置下载失败状态
      */
     fun setError(message: String) {
+        if (!::progressBar.isInitialized) return
+        
         progressBar.isIndeterminate = false
         tvStatus.text = "下载失败: $message"
         tvSpeed.text = ""
         isDownloading = false
         updateButtonState()
+    }
+    
+    /**
+     * 设置取消监听器
+     */
+    fun setOnCancelListener(listener: () -> Unit) {
+        onCancelListener = listener
     }
     
     /**
@@ -119,6 +148,8 @@ class DownloadProgressDialog(context: Context) : Dialog(context) {
     }
     
     private fun updateButtonState() {
+        if (!::btnCancel.isInitialized) return
+        
         if (isDownloading) {
             btnCancel.text = "取消下载"
             btnBackground.visibility = View.VISIBLE

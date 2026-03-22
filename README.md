@@ -32,7 +32,7 @@
   <img src="https://img.shields.io/badge/Language-Kotlin-orange.svg?style=flat-square&logo=kotlin" alt="Language">
   <img src="https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat-square" alt="API">
   <img src="https://img.shields.io/badge/Size-6MB-blue.svg?style=flat-square" alt="Size">
-  <img src="https://img.shields.io/badge/Version-1.0.5-purple.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.0.6-purple.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/License-Custom-9cf.svg?style=flat-square" alt="License">
 </p>
 
@@ -646,14 +646,20 @@ KEY_PASSWORD=你的密钥密码
 
 ### 最新版本
 
+**v1.0.6** (2026-03-22) - 单例模式修复
+
+- 🐛 修复下载进度不显示问题
+- 🔧 UpdateManager 改为单例模式
+- 🔧 统一全局下载状态管理
+
+<details>
+<summary>历史版本</summary>
+
 **v1.0.5** (2026-03-22) - 下载流程修复
 
 - 🐛 修复点击"立即下载"后跳转到初始页面的问题
 - 🔧 使用 `repeatOnLifecycle` 管理 Flow 生命周期
 - 🔧 修复 Flow 收集器重复创建问题
-
-<details>
-<summary>历史版本</summary>
 
 **v1.0.4** (2026-03-22) - 安装权限优化
 
