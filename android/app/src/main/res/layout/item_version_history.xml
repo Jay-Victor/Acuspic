@@ -3,25 +3,63 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
+    android:layout_marginBottom="12dp"
     app:cardBackgroundColor="@color/dark_surface"
-    app:cardCornerRadius="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
     app:strokeWidth="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="12dp">
+        android:orientation="horizontal"
+        android:padding="16dp">
 
-        <CheckBox
-            android:id="@+id/checkbox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:buttonTint="@color/accent_primary" />
+        <!-- 选择状态指示器（编辑模式显示） -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/selectionIndicator"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="12dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/dark_text_hint"
+            app:strokeWidth="2dp">
 
+            <ImageView
+                android:id="@+id/ivSelected"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_check"
+                android:visibility="gone"
+                app:tint="@color/white" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 版本图标 -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginEnd="16dp"
+            app:cardBackgroundColor="@color/accent_primary_15"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_update"
+                app:tint="@color/accent_primary" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 版本信息 -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -31,8 +69,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/tvVersionName"
@@ -44,64 +82,97 @@
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tvStatus"
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/statusBadge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="已下载"
-                    android:textColor="@color/success"
-                    android:textSize="12sp" />
+                    app:cardBackgroundColor="@color/success_15"
+                    app:cardCornerRadius="4dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <TextView
+                        android:id="@+id/tvStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:text="已下载"
+                        android:textColor="@color/success"
+                        android:textSize="11sp" />
+
+                </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvPublishDate"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="2024-01-01"
-                android:textColor="@color/dark_text_secondary"
-                android:textSize="12sp" />
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tvFileSize"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="15.2 MB"
-                android:textColor="@color/dark_text_secondary"
-                android:textSize="11sp"
-                android:visibility="gone" />
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_history"
+                    app:tint="@color/dark_text_hint" />
+
+                <TextView
+                    android:id="@+id/tvPublishDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="2024-01-01"
+                    android:textColor="@color/dark_text_secondary"
+                    android:textSize="12sp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="10dp"
+                    android:layout_marginHorizontal="8dp"
+                    android:background="@color/dark_divider" />
+
+                <TextView
+                    android:id="@+id/tvFileSize"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="15.2 MB"
+                    android:textColor="@color/dark_text_hint"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
+        <!-- 操作按钮组（非编辑模式显示） -->
         <LinearLayout
+            android:id="@+id/actionButtons"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginStart="8dp">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDelete"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="删除"
-                android:textColor="@color/error"
-                android:textSize="12sp"
-                android:minWidth="0dp"
-                android:paddingHorizontal="8dp" />
+            android:layout_marginStart="8dp"
+            android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRollback"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="12dp"
                 android:text="回退"
                 android:textColor="@color/accent_primary"
-                android:textSize="12sp"
-                android:minWidth="0dp"
-                android:paddingHorizontal="8dp" />
+                android:textSize="13sp" />
+
+            <ImageButton
+                android:id="@+id/btnMore"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="更多操作"
+                android:src="@drawable/ic_more_vert"
+                app:tint="@color/dark_text_hint" />
 
         </LinearLayout>
 

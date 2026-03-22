@@ -52,10 +52,15 @@
     <color name="error">#F44336</color>
     <color name="warning">#FF9800</color>
 
-    <!-- Additional colors -->
-    <color name="accent_secondary">#60A5FA</color>
+    <!-- Missing colors -->
     <color name="accent_blue">#3B82F6</color>
     <color name="white">#FFFFFF</color>
     <color name="dark_border">#1AFFFFFF</color>
-    <color name="dark_surface_variant">#1AFFFFFF</color>
+
+    <!-- Additional colors for download dialog -->
+    <color name="accent_primary_15">#263B82F6</color>
+    <color name="dark_surface_variant">#2A2A2A</color>
+
+    <!-- Additional colors for version history -->
+    <color name="success_15">#264CAF50</color>
 </resources>

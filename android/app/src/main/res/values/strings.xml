@@ -24,4 +24,16 @@
     <string name="confirm_title">确认</string>
     <string name="error_import">导入失败，请重试</string>
     <string name="error_export">导出失败，请重试</string>
+
+    <!-- Download Dialog Strings -->
+    <string name="download_title">下载更新</string>
+    <string name="download_icon_description">下载图标</string>
+    <string name="download_progress_description">下载进度</string>
+    <string name="status_connecting">正在连接服务器...</string>
+    <string name="status_downloading">正在下载...</string>
+    <string name="status_complete">下载完成</string>
+    <string name="status_error">下载失败</string>
+    <string name="background_download">后台下载</string>
+    <string name="cancel">取消</string>
+    <string name="close">关闭</string>
 </resources>

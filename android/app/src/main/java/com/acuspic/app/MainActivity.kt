@@ -922,6 +922,7 @@ fun hello() {
         // 设置按钮 - 深色模式使用白色
         btnSettings.imageTintList = ContextCompat.getColorStateList(this, android.R.color.white)
 
+        @Suppress("DEPRECATION")
         window.statusBarColor = ContextCompat.getColor(this, R.color.dark_surface)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -939,8 +940,10 @@ fun hello() {
         bottomToolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.light_surface))
         formatToolsScroll.setBackgroundColor(ContextCompat.getColor(this, R.color.light_surface))
 
+        // 设置按钮 - 浅色模式使用深色
         btnSettings.imageTintList = ContextCompat.getColorStateList(this, R.color.light_text_primary)
 
+        @Suppress("DEPRECATION")
         window.statusBarColor = ContextCompat.getColor(this, R.color.light_background)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

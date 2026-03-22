@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -17,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.acuspic.app.update.UpdateManager
 import com.acuspic.app.update.VersionHistory
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.io.File
@@ -27,18 +27,20 @@ class VersionHistoryActivity : AppCompatActivity() {
     private lateinit var emptyView: LinearLayout
     private lateinit var toolbar: LinearLayout
     private lateinit var btnBack: ImageButton
-    private lateinit var btnClearAll: ImageButton
-    private lateinit var storageSummary: LinearLayout
+    private lateinit var btnEditMode: ImageButton
+    private lateinit var storageSummary: View
     private lateinit var tvDownloadedCount: TextView
     private lateinit var tvTotalSize: TextView
-    private lateinit var batchActionBar: LinearLayout
-    private lateinit var checkboxSelectAll: CheckBox
+    private lateinit var btnClearAll: MaterialButton
+    private lateinit var batchActionBar: MaterialCardView
+    private lateinit var checkboxSelectAll: MaterialButton
     private lateinit var tvSelectedCount: TextView
     private lateinit var btnDeleteSelected: MaterialButton
 
     private lateinit var updateManager: UpdateManager
     private lateinit var adapter: VersionHistoryAdapter
     private val selectedVersions = mutableSetOf<VersionHistory>()
+    private var isEditMode = false
 
     private val installPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -67,10 +69,11 @@ class VersionHistoryActivity : AppCompatActivity() {
         emptyView = findViewById(R.id.emptyView)
         toolbar = findViewById(R.id.toolbar)
         btnBack = findViewById(R.id.btnBack)
-        btnClearAll = findViewById(R.id.btnClearAll)
+        btnEditMode = findViewById(R.id.btnEditMode)
         storageSummary = findViewById(R.id.storageSummary)
         tvDownloadedCount = findViewById(R.id.tvDownloadedCount)
         tvTotalSize = findViewById(R.id.tvTotalSize)
+        btnClearAll = findViewById(R.id.btnClearAll)
         batchActionBar = findViewById(R.id.batchActionBar)
         checkboxSelectAll = findViewById(R.id.checkboxSelectAll)
         tvSelectedCount = findViewById(R.id.tvSelectedCount)
@@ -82,11 +85,17 @@ class VersionHistoryActivity : AppCompatActivity() {
     private fun setupListeners() {
         btnBack.setOnClickListener { finish() }
 
+        btnEditMode.setOnClickListener {
+            toggleEditMode()
+        }
+
         btnClearAll.setOnClickListener {
             showClearAllConfirm()
         }
 
-        checkboxSelectAll.setOnCheckedChangeListener { _, isChecked ->
+        checkboxSelectAll.setOnClickListener {
+            val isChecked = !checkboxSelectAll.isSelected
+            checkboxSelectAll.isSelected = isChecked
             if (isChecked) {
                 selectAll()
             } else {
@@ -99,6 +108,21 @@ class VersionHistoryActivity : AppCompatActivity() {
         }
     }
 
+    private fun toggleEditMode() {
+        isEditMode = !isEditMode
+        if (isEditMode) {
+            btnEditMode.setImageResource(R.drawable.ic_close)
+            batchActionBar.visibility = View.VISIBLE
+            btnClearAll.visibility = View.VISIBLE
+        } else {
+            btnEditMode.setImageResource(R.drawable.ic_delete)
+            batchActionBar.visibility = View.GONE
+            btnClearAll.visibility = View.GONE
+            deselectAll()
+        }
+        adapter.setEditMode(isEditMode)
+    }
+
     private fun loadVersionHistory() {
         val versions = updateManager.getVersionHistory()
 
@@ -106,22 +130,32 @@ class VersionHistoryActivity : AppCompatActivity() {
             recyclerView.visibility = View.GONE
             emptyView.visibility = View.VISIBLE
             storageSummary.visibility = View.GONE
-            btnClearAll.visibility = View.GONE
+            btnEditMode.visibility = View.GONE
             batchActionBar.visibility = View.GONE
         } else {
             recyclerView.visibility = View.VISIBLE
             emptyView.visibility = View.GONE
             storageSummary.visibility = View.VISIBLE
-            btnClearAll.visibility = View.VISIBLE
+            btnEditMode.visibility = View.VISIBLE
 
-            adapter = VersionHistoryAdapter(versions.toMutableList()) { version, isSelected ->
-                if (isSelected) {
-                    selectedVersions.add(version)
-                } else {
-                    selectedVersions.remove(version)
+            adapter = VersionHistoryAdapter(
+                versions.toMutableList(),
+                isEditMode,
+                { version, isSelected ->
+                    if (isSelected) {
+                        selectedVersions.add(version)
+                    } else {
+                        selectedVersions.remove(version)
+                    }
+                    updateBatchActionBar()
+                },
+                { version ->
+                    showDeleteConfirm(version)
+                },
+                { version ->
+                    rollbackToVersion(version)
                 }
-                updateBatchActionBar()
-            }
+            )
 
             recyclerView.adapter = adapter
             updateStorageSummary()
@@ -133,7 +167,7 @@ class VersionHistoryActivity : AppCompatActivity() {
         val totalSize = downloadedVersions.sumOf { getFileSize(it) }
 
         tvDownloadedCount.text = "已下载 ${downloadedVersions.size} 个版本"
-        tvTotalSize.text = "共 ${formatFileSize(totalSize)}"
+        tvTotalSize.text = "共占用 ${formatFileSize(totalSize)} 存储空间"
     }
 
     private fun getFileSize(version: VersionHistory): Long {
@@ -157,15 +191,11 @@ class VersionHistoryActivity : AppCompatActivity() {
 
     private fun updateBatchActionBar() {
         val count = selectedVersions.size
-        if (count > 0) {
-            batchActionBar.visibility = View.VISIBLE
-            tvSelectedCount.text = "已选择 $count 项"
-        } else {
-            batchActionBar.visibility = View.GONE
-        }
+        tvSelectedCount.text = "已选择 $count 项"
 
         val totalCount = adapter.itemCount
-        checkboxSelectAll.isChecked = count == totalCount && count > 0
+        checkboxSelectAll.isSelected = count == totalCount && count > 0
+        checkboxSelectAll.text = if (count == totalCount && count > 0) "取消全选" else "全选"
     }
 
     private fun selectAll() {
@@ -221,6 +251,29 @@ class VersionHistoryActivity : AppCompatActivity() {
                 selectedVersions.clear()
                 loadVersionHistory()
                 Toast.makeText(this, "已清除所有下载文件", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun rollbackToVersion(version: VersionHistory) {
+        val success = updateManager.rollbackToVersion(version.versionName)
+        if (success) {
+            val file = updateManager.getPendingInstallFile()
+            if (file != null) {
+                tryInstallApk(file)
+            }
+        }
+    }
+
+    private fun showDeleteConfirm(version: VersionHistory) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("删除版本")
+            .setMessage("确定要删除 v${version.versionName} 吗？")
+            .setPositiveButton("删除") { _, _ ->
+                updateManager.deleteVersion(version)
+                loadVersionHistory()
+                Toast.makeText(this, "已删除 v${version.versionName}", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("取消", null)
             .show()
@@ -289,19 +342,24 @@ class VersionHistoryActivity : AppCompatActivity() {
 
     inner class VersionHistoryAdapter(
         private val versions: MutableList<VersionHistory>,
-        private val onSelectionChanged: (VersionHistory, Boolean) -> Unit
+        private var editMode: Boolean,
+        private val onSelectionChanged: (VersionHistory, Boolean) -> Unit,
+        private val onDelete: (VersionHistory) -> Unit,
+        private val onRollback: (VersionHistory) -> Unit
     ) : RecyclerView.Adapter<VersionHistoryAdapter.ViewHolder>() {
 
         private val selectedItems = mutableSetOf<Int>()
 
         inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            val checkbox: CheckBox = itemView.findViewById(R.id.checkbox)
+            val selectionIndicator: MaterialCardView = itemView.findViewById(R.id.selectionIndicator)
+            val ivSelected: android.widget.ImageView = itemView.findViewById(R.id.ivSelected)
             val tvVersionName: TextView = itemView.findViewById(R.id.tvVersionName)
             val tvStatus: TextView = itemView.findViewById(R.id.tvStatus)
             val tvPublishDate: TextView = itemView.findViewById(R.id.tvPublishDate)
             val tvFileSize: TextView = itemView.findViewById(R.id.tvFileSize)
-            val btnDelete: MaterialButton = itemView.findViewById(R.id.btnDelete)
+            val actionButtons: LinearLayout = itemView.findViewById(R.id.actionButtons)
             val btnRollback: MaterialButton = itemView.findViewById(R.id.btnRollback)
+            val btnMore: ImageButton = itemView.findViewById(R.id.btnMore)
         }
 
         override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): ViewHolder {
@@ -313,7 +371,7 @@ class VersionHistoryActivity : AppCompatActivity() {
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val version = versions[position]
 
-            holder.tvVersionName.text = version.versionName
+            holder.tvVersionName.text = "v${version.versionName}"
             holder.tvPublishDate.text = version.publishDate
 
             if (version.isDownloaded) {
@@ -329,29 +387,60 @@ class VersionHistoryActivity : AppCompatActivity() {
                 holder.btnRollback.visibility = View.GONE
             }
 
-            holder.checkbox.isChecked = selectedItems.contains(position)
-            holder.checkbox.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) {
-                    selectedItems.add(position)
-                } else {
-                    selectedItems.remove(position)
+            // 编辑模式显示选择指示器
+            if (editMode) {
+                holder.selectionIndicator.visibility = View.VISIBLE
+                holder.actionButtons.visibility = View.GONE
+                
+                val isSelected = selectedItems.contains(position)
+                updateSelectionUI(holder, isSelected)
+                
+                holder.itemView.setOnClickListener {
+                    val newSelected = !selectedItems.contains(position)
+                    if (newSelected) {
+                        selectedItems.add(position)
+                    } else {
+                        selectedItems.remove(position)
+                    }
+                    updateSelectionUI(holder, newSelected)
+                    onSelectionChanged(version, newSelected)
                 }
-                onSelectionChanged(version, isChecked)
-            }
-
-            holder.btnDelete.setOnClickListener {
-                showDeleteConfirm(version)
+            } else {
+                holder.selectionIndicator.visibility = View.GONE
+                holder.actionButtons.visibility = View.VISIBLE
+                holder.itemView.setOnClickListener(null)
             }
 
             holder.btnRollback.setOnClickListener {
-                val success = updateManager.rollbackToVersion(version.versionName)
-                if (success) {
-                    val file = updateManager.getPendingInstallFile()
-                    if (file != null) {
-                        tryInstallApk(file)
+                onRollback(version)
+            }
+
+            holder.btnMore.setOnClickListener {
+                showMoreOptions(version)
+            }
+        }
+
+        private fun updateSelectionUI(holder: ViewHolder, isSelected: Boolean) {
+            if (isSelected) {
+                holder.selectionIndicator.setCardBackgroundColor(getColor(R.color.accent_primary))
+                holder.selectionIndicator.strokeWidth = 0
+                holder.ivSelected.visibility = View.VISIBLE
+            } else {
+                holder.selectionIndicator.setCardBackgroundColor(android.graphics.Color.TRANSPARENT)
+                holder.selectionIndicator.strokeWidth = resources.getDimensionPixelSize(R.dimen.selection_stroke_width)
+                holder.ivSelected.visibility = View.GONE
+            }
+        }
+
+        private fun showMoreOptions(version: VersionHistory) {
+            val options = arrayOf("删除")
+            MaterialAlertDialogBuilder(this@VersionHistoryActivity)
+                .setItems(options) { _, which ->
+                    when (which) {
+                        0 -> onDelete(version)
                     }
                 }
-            }
+                .show()
         }
 
         override fun getItemCount() = versions.size
@@ -368,45 +457,12 @@ class VersionHistoryActivity : AppCompatActivity() {
             notifyDataSetChanged()
         }
 
-        private fun showDeleteConfirm(version: VersionHistory) {
-            val position = versions.indexOf(version)
-            if (position == -1) return
-            
-            MaterialAlertDialogBuilder(this@VersionHistoryActivity)
-                .setTitle("删除版本")
-                .setMessage("确定要删除 v${version.versionName} 吗？")
-                .setPositiveButton("删除") { _, _ ->
-                    updateManager.deleteVersion(version)
-                    
-                    versions.removeAt(position)
-                    selectedItems.remove(position)
-                    selectedVersions.remove(version)
-                    
-                    val newSelectedItems = mutableSetOf<Int>()
-                    selectedItems.forEach { idx ->
-                        if (idx > position) {
-                            newSelectedItems.add(idx - 1)
-                        } else if (idx < position) {
-                            newSelectedItems.add(idx)
-                        }
-                    }
-                    selectedItems.clear()
-                    selectedItems.addAll(newSelectedItems)
-                    
-                    notifyItemRemoved(position)
-                    notifyItemRangeChanged(position, versions.size)
-                    
-                    this@VersionHistoryActivity.updateStorageSummary()
-                    this@VersionHistoryActivity.updateBatchActionBar()
-                    
-                    if (versions.isEmpty()) {
-                        this@VersionHistoryActivity.loadVersionHistory()
-                    }
-                    
-                    Toast.makeText(this@VersionHistoryActivity, "已删除 v${version.versionName}", Toast.LENGTH_SHORT).show()
-                }
-                .setNegativeButton("取消", null)
-                .show()
+        fun setEditMode(editMode: Boolean) {
+            this.editMode = editMode
+            if (!editMode) {
+                selectedItems.clear()
+            }
+            notifyDataSetChanged()
         }
     }
 }

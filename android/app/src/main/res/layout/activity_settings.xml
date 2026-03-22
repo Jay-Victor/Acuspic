@@ -109,29 +109,9 @@
                                 android:id="@+id/tvCurrentVersion"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="当前版本: v1.0.3"
+                                android:text="当前版本: v1.0.0"
                                 android:textColor="@color/dark_text_secondary"
                                 android:textSize="12sp" />
-                            
-                            <TextView
-                                android:id="@+id/tvUpdateStatus"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text=""
-                                android:textColor="@color/accent_primary"
-                                android:textSize="12sp"
-                                android:visibility="gone" />
-                            
-                            <com.google.android.material.progressindicator.LinearProgressIndicator
-                                android:id="@+id/progressUpdate"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:visibility="gone"
-                                app:indicatorColor="@color/accent_primary"
-                                app:trackColor="@color/dark_border"
-                                app:trackCornerRadius="4dp" />
                         </LinearLayout>
 
                         <ImageView

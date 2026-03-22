@@ -2,7 +2,6 @@ package com.acuspic.app.update
 
 import android.content.Context
 import android.telephony.TelephonyManager
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -16,16 +15,11 @@ import java.net.URL
 class VersionChecker(private val context: Context) {
 
     companion object {
-        private const val TAG = "VersionChecker"
         private const val GITHUB_API_URL = "https://api.github.com/repos/Jay-Victor/Acuspic/releases/latest"
         private const val GITEE_API_URL = "https://gitee.com/api/v5/repos/Jay-Victor/Acuspic/releases/latest"
         
         // 版本缓存时间（1小时）
         private const val CACHE_DURATION = 60 * 60 * 1000L
-        
-        // 重试配置
-        private const val MAX_RETRY_COUNT = 3
-        private const val RETRY_DELAY = 1000L
     }
 
     private val prefs = context.getSharedPreferences("UpdatePrefs", Context.MODE_PRIVATE)
@@ -57,47 +51,15 @@ class VersionChecker(private val context: Context) {
                 else -> repositoryType
             }
 
-            // 获取版本信息（带重试）
-            val versionInfo = fetchVersionInfoWithRetry(actualRepository)
+            // 获取版本信息
+            val versionInfo = fetchVersionInfo(actualRepository)
             cachedVersionInfo = versionInfo
             lastCheckTime = System.currentTimeMillis()
 
             return@withContext compareVersion(versionInfo, currentVersionCode)
         } catch (e: Exception) {
-            Log.e(TAG, "检查更新失败: ${e.message}", e)
             return@withContext UpdateCheckResult.Error("检查更新失败: ${e.message}")
         }
-    }
-
-    /**
-     * 带重试的版本信息获取
-     */
-    private fun fetchVersionInfoWithRetry(repositoryType: RepositoryType): VersionInfo {
-        var lastException: Exception? = null
-        
-        for (attempt in 1..MAX_RETRY_COUNT) {
-            try {
-                return fetchVersionInfo(repositoryType)
-            } catch (e: Exception) {
-                lastException = e
-                Log.w(TAG, "获取版本信息失败 (尝试 $attempt/$MAX_RETRY_COUNT): ${e.message}")
-                
-                if (attempt < MAX_RETRY_COUNT) {
-                    // 如果是GitHub失败，尝试切换到Gitee
-                    if (repositoryType == RepositoryType.GITHUB) {
-                        Log.i(TAG, "GitHub请求失败，尝试切换到Gitee...")
-                        try {
-                            return fetchVersionInfo(RepositoryType.GITEE)
-                        } catch (e2: Exception) {
-                            Log.w(TAG, "Gitee备用请求也失败: ${e2.message}")
-                        }
-                    }
-                    Thread.sleep(RETRY_DELAY)
-                }
-            }
-        }
-        
-        throw lastException ?: Exception("未知错误")
     }
 
     /**
@@ -111,7 +73,6 @@ class VersionChecker(private val context: Context) {
             // 中国用户使用Gitee，其他使用GitHub
             if (countryCode == "CN") RepositoryType.GITEE else RepositoryType.GITHUB
         } catch (e: Exception) {
-            Log.w(TAG, "获取国家代码失败，使用默认仓库: ${e.message}")
             // 默认使用Gitee
             RepositoryType.GITEE
         }
@@ -127,30 +88,21 @@ class VersionChecker(private val context: Context) {
             else -> GITEE_API_URL
         }
 
-        Log.d(TAG, "正在从 ${repositoryType.name} 获取版本信息: $apiUrl")
-
         val connection = URL(apiUrl).openConnection() as HttpURLConnection
         connection.apply {
             requestMethod = "GET"
-            connectTimeout = 15000
-            readTimeout = 15000
-            // GitHub API 需要设置 User-Agent
-            setRequestProperty("User-Agent", "Acuspic-Android-App")
+            connectTimeout = 10000
+            readTimeout = 10000
             setRequestProperty("Accept", "application/vnd.github.v3+json")
         }
 
         try {
             val responseCode = connection.responseCode
-            Log.d(TAG, "HTTP响应码: $responseCode")
-            
             if (responseCode != HttpURLConnection.HTTP_OK) {
-                val errorStream = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "无错误信息"
-                Log.e(TAG, "HTTP错误: $responseCode, 响应: $errorStream")
                 throw Exception("HTTP错误: $responseCode")
             }
 
             val response = connection.inputStream.bufferedReader().use { it.readText() }
-            Log.d(TAG, "成功获取版本信息，响应长度: ${response.length}")
             return parseVersionInfo(response, repositoryType)
         } finally {
             connection.disconnect()
@@ -165,9 +117,7 @@ class VersionChecker(private val context: Context) {
         
         val tagName = jsonObject.getString("tag_name")
         val versionName = tagName.removePrefix("v")
-        
-        // 正确的语义化版本号解析
-        val versionCode = parseSemanticVersionCode(versionName)
+        val versionCode = versionName.replace(".", "").toIntOrNull() ?: 1
         
         val releaseNotes = jsonObject.optString("body", "")
         val publishDate = jsonObject.optString("published_at", "")
@@ -183,8 +133,6 @@ class VersionChecker(private val context: Context) {
         val isForceUpdate = jsonObject.optString("name", "").contains("[强制]") ||
                            releaseNotes.contains("[强制更新]")
 
-        Log.i(TAG, "解析版本: $versionName (code: $versionCode), 下载地址: $downloadUrl")
-
         return VersionInfo(
             versionCode = versionCode,
             versionName = versionName,
@@ -194,34 +142,6 @@ class VersionChecker(private val context: Context) {
             isImportant = isImportant,
             publishDate = publishDate
         )
-    }
-
-    /**
-     * 解析语义化版本号为整数
-     * 格式: major.minor.patch (如 1.2.3)
-     * 转换公式: major * 10000 + minor * 100 + patch
-     * 这样可以正确比较: 1.2.3 < 1.10.0 < 2.0.0
-     */
-    private fun parseSemanticVersionCode(versionName: String): Int {
-        try {
-            // 移除可能的预发布标识 (如 1.0.0-beta.1 -> 1.0.0)
-            val cleanVersion = versionName.split("-")[0]
-            
-            val parts = cleanVersion.split(".")
-            val major = parts.getOrNull(0)?.toIntOrNull() ?: 0
-            val minor = parts.getOrNull(1)?.toIntOrNull() ?: 0
-            val patch = parts.getOrNull(2)?.toIntOrNull() ?: 0
-            
-            // 确保每部分不超过两位数
-            if (major > 99 || minor > 99 || patch > 99) {
-                Log.w(TAG, "版本号某部分超过99: $versionName")
-            }
-            
-            return major * 10000 + minor * 100 + patch
-        } catch (e: Exception) {
-            Log.e(TAG, "解析版本号失败: $versionName", e)
-            return 1
-        }
     }
 
     /**
@@ -238,14 +158,11 @@ class VersionChecker(private val context: Context) {
                 
                 // 查找APK文件（优先大写Apk后缀）
                 if (name.endsWith(".Apk", ignoreCase = true)) {
-                    val url = asset.getString("browser_download_url")
-                    Log.d(TAG, "找到APK资源: $name, URL: $url")
-                    return url
+                    return asset.getString("browser_download_url")
                 }
             }
         }
         
-        Log.w(TAG, "未找到APK下载资源")
         // 如果没有找到APK，返回空字符串
         return ""
     }
@@ -254,21 +171,11 @@ class VersionChecker(private val context: Context) {
      * 比较版本
      */
     private fun compareVersion(versionInfo: VersionInfo, currentVersionCode: Int): UpdateCheckResult {
-        Log.d(TAG, "版本比较: 远程=${versionInfo.versionCode}, 当前=$currentVersionCode")
-        
         return when {
             versionInfo.versionCode > currentVersionCode -> {
-                Log.i(TAG, "发现新版本: ${versionInfo.versionName}")
                 UpdateCheckResult.HasUpdate(versionInfo, versionInfo.isForceUpdate)
             }
-            versionInfo.versionCode < currentVersionCode -> {
-                Log.w(TAG, "远程版本低于当前版本，可能是测试版本")
-                UpdateCheckResult.NoUpdate
-            }
-            else -> {
-                Log.i(TAG, "已是最新版本")
-                UpdateCheckResult.NoUpdate
-            }
+            else -> UpdateCheckResult.NoUpdate
         }
     }
 

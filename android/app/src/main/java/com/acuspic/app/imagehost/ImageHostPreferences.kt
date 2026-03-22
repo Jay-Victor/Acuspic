@@ -2,7 +2,6 @@ package com.acuspic.app.imagehost
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -20,14 +19,16 @@ class ImageHostPreferences(context: Context) {
         private const val KEY_API_SECRET = "api_secret"
         private const val KEY_CUSTOM_DOMAIN = "custom_domain"
         private const val KEY_CUSTOM_UPLOAD_URL = "custom_upload_url"
+        // 通用仓库配置（GitHub/Gitee共用）
         private const val KEY_REPO = "repo"
         private const val KEY_BRANCH = "branch"
+        // 七牛云配置
         private const val KEY_BUCKET = "bucket"
+        // 开关配置
         private const val KEY_IS_ENABLED = "is_enabled"
         private const val KEY_AUTO_UPLOAD = "auto_upload"
         private const val KEY_UPLOAD_HISTORY = "upload_history"
         private const val MAX_HISTORY_SIZE = 50
-        private const val TAG = "ImageHostPreferences"
     }
 
     /**
@@ -144,7 +145,7 @@ class ImageHostPreferences(context: Context) {
                 list.add(deserializeUploadHistory(jsonObject))
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse upload history: ${e.message}", e)
+            e.printStackTrace()
         }
         return list
     }
