@@ -12,6 +12,7 @@
 - [代码规范](#代码规范)
 - [提交规范](#提交规范)
 - [Pull Request 流程](#pull-request-流程)
+- [版本发布规范](#版本发布规范)
 - [问题反馈](#问题反馈)
 
 ---
@@ -310,6 +311,88 @@ git push origin feature/your-feature-name
 
 **预期效果**
 [描述功能应该如何工作]
+```
+
+---
+
+## 版本发布规范
+
+### 发布流程
+
+1. **更新版本号**
+   - 在 `android/app/build.gradle.kts` 中更新 `versionCode` 和 `versionName`
+   - 更新 `CHANGELOG.md` 添加版本更新日志
+
+2. **构建 Release APK**
+   ```bash
+   ./gradlew assembleRelease
+   ```
+
+3. **组织发布文件**
+   
+   构建完成后，在 `android/app/build/outputs/apk/release/` 目录下创建版本文件夹：
+   
+   ```
+   release/
+   └── v{版本号}/           # 例如: v1.0.0, v1.1.0
+       ├── Acuspic-v{版本号}.Apk    # APK 安装包
+       ├── Acuspic-v{版本号}.md     # 版本说明文档
+       └── output-metadata.json    # 构建元数据
+   ```
+
+4. **版本说明文档模板**
+   
+   每个版本文件夹中应包含 `Acuspic-v{版本号}.md` 文件，内容包括：
+   - 版本简介
+   - 功能特性
+   - 更新内容
+   - 下载安装说明
+   - 相关链接
+
+### 版本文件夹命名规范
+
+| 版本类型 | 命名格式 | 示例 |
+|----------|----------|------|
+| 正式版本 | `v{major}.{minor}.{patch}` | `v1.0.0`, `v1.1.0` |
+| 测试版本 | `v{major}.{minor}.{patch}-beta.{n}` | `v1.1.0-beta.1` |
+| 候选版本 | `v{major}.{minor}.{patch}-rc.{n}` | `v1.1.0-rc.1` |
+
+### ⚠️ 重要注意事项
+
+1. **保留历史版本**
+   - 旧版本文件夹永久保留，**禁止删除或修改**
+   - 每个版本都是独立的，互不影响
+
+2. **增量创建原则**
+   - 发布新版本时，只创建新版本文件夹
+   - **不要移动或覆盖**旧版本文件
+
+3. **版本完整性**
+   - 每个版本文件夹必须包含完整的三个文件：
+     - `Acuspic-v{版本号}.Apk` - 安装包
+     - `Acuspic-v{版本号}.md` - 说明文档
+     - `output-metadata.json` - 构建元数据
+
+4. **操作前检查**
+   - 创建新版本前，先确认 `release/` 目录结构
+   - 确保不会影响已存在的版本文件夹
+
+### 示例目录结构
+
+```
+android/app/build/outputs/apk/release/
+├── v1.0.0/
+│   ├── Acuspic-v1.0.0.Apk
+│   ├── Acuspic-v1.0.0.md
+│   └── output-metadata.json
+├── v1.1.0/
+│   ├── Acuspic-v1.1.0.Apk
+│   ├── Acuspic-v1.1.0.md
+│   └── output-metadata.json
+└── v1.2.0-beta.1/
+    ├── Acuspic-v1.2.0-beta.1.Apk
+    ├── Acuspic-v1.2.0-beta.1.md
+    └── output-metadata.json
 ```
 
 ---

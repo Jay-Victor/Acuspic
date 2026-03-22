@@ -19,8 +19,8 @@ android {
         applicationId = "com.acuspic.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
         
         buildToolsVersion = "36.1.0"
 
@@ -128,6 +128,9 @@ dependencies {
 
     // Glide - Image loading
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    
+    // Timber - Logging
+    implementation("com.jakewharton.timber:timber:5.0.1")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

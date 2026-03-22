@@ -2,6 +2,7 @@ package com.acuspic.app.update
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -17,6 +18,7 @@ class VersionHistoryManager(context: Context) {
         private const val PREFS_NAME = "VersionHistoryPrefs"
         private const val KEY_VERSION_HISTORY = "version_history"
         private const val MAX_HISTORY_SIZE = 10
+        private const val TAG = "VersionHistoryManager"
     }
 
     /**
@@ -121,7 +123,7 @@ class VersionHistoryManager(context: Context) {
                 list.add(deserializeVersionHistory(jsonObject))
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to parse version history: ${e.message}", e)
         }
         return list
     }

@@ -7,6 +7,28 @@
 
 ---
 
+## [1.0.1] - 2026-03-22
+
+### Bug修复
+
+- 🐛 修复 `VersionHistoryManager.kt` 中异常处理不规范问题，使用 `Log.e()` 替代 `e.printStackTrace()`
+- 🐛 修复 `ImageHostPreferences.kt` 中异常处理不规范问题，使用 `Log.e()` 替代 `e.printStackTrace()`
+- 🐛 移除 `DownloadManager.kt` 中冗余的 `@Suppress("UNUSED_VARIABLE")` 注解
+- 🐛 移除 `MainActivity.kt` 中冗余的 `@Suppress("DEPRECATION")` 注解
+
+### 代码质量改进
+
+- 🔧 添加 Timber 日志库依赖 (v5.0.1)
+- 🔧 添加 EditorConfig 代码风格配置文件
+- 🔧 优化异常处理，使用带 TAG 的日志输出
+
+### 技术债务偿还
+
+- 📝 统一日志输出规范
+- 📝 建立代码风格统一配置
+
+---
+
 ## [1.0.0] - 2026-03-21
 
 ### 首次发布
@@ -98,4 +120,5 @@
 
 ---
 
+[1.0.1]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.1
 [1.0.0]: https://github.com/Jay-Victor/Acuspic/releases/tag/v1.0.0

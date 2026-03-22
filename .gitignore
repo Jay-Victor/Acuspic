@@ -44,3 +44,6 @@ externalNativeBuild/
 # Compiled files
 *.class
 *.dex
+
+# Product planning documents (internal use)
+产品后续发展规划.md

@@ -92,7 +92,6 @@ class DownloadManager(private val context: Context) {
             val buffer = ByteArray(BUFFER_SIZE)
             var bytesRead: Int
             var lastUpdateTime = System.currentTimeMillis()
-            @Suppress("UNUSED_VARIABLE")
             var lastDownloadedBytes = downloadedBytes
             
             inputStream.use { input ->
