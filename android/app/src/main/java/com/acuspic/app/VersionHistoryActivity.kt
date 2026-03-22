@@ -287,20 +287,47 @@ class VersionHistoryActivity : AppCompatActivity() {
         }
 
         private fun showDeleteConfirm(version: VersionHistory) {
+            val position = versions.indexOf(version)
+            if (position == -1) return
+            
             MaterialAlertDialogBuilder(this@VersionHistoryActivity)
                 .setTitle("删除版本")
                 .setMessage("确定要删除 v${version.versionName} 吗？")
                 .setPositiveButton("删除") { _, _ ->
+                    // 先删除文件和记录
                     updateManager.deleteVersion(version)
-                    versions.remove(version)
+                    
+                    // 从列表中移除
+                    versions.removeAt(position)
+                    selectedItems.remove(position)
                     selectedVersions.remove(version)
-                    notifyItemRemoved(versions.indexOf(version))
-                    updateStorageSummary()
-                    updateBatchActionBar()
-
-                    if (versions.isEmpty()) {
-                        loadVersionHistory()
+                    
+                    // 更新选中项的位置索引
+                    val newSelectedItems = mutableSetOf<Int>()
+                    selectedItems.forEach { idx ->
+                        if (idx > position) {
+                            newSelectedItems.add(idx - 1)
+                        } else if (idx < position) {
+                            newSelectedItems.add(idx)
+                        }
                     }
+                    selectedItems.clear()
+                    selectedItems.addAll(newSelectedItems)
+                    
+                    // 通知适配器更新（使用内部类的notifyItemRemoved方法）
+                    notifyItemRemoved(position)
+                    notifyItemRangeChanged(position, versions.size)
+                    
+                    // 更新存储摘要和批量操作栏
+                    this@VersionHistoryActivity.updateStorageSummary()
+                    this@VersionHistoryActivity.updateBatchActionBar()
+                    
+                    // 如果列表为空，重新加载显示空视图
+                    if (versions.isEmpty()) {
+                        this@VersionHistoryActivity.loadVersionHistory()
+                    }
+                    
+                    Toast.makeText(this@VersionHistoryActivity, "已删除 v${version.versionName}", Toast.LENGTH_SHORT).show()
                 }
                 .setNegativeButton("取消", null)
                 .show()

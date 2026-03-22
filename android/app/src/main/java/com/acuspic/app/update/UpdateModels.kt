@@ -13,7 +13,25 @@ data class VersionInfo(
     val isImportant: Boolean = false,
     val publishDate: String = "",
     val fileSize: Long = 0L
-)
+) {
+    /**
+     * 格式化版本显示
+     */
+    fun getDisplayVersion(): String {
+        return "v$versionName"
+    }
+    
+    /**
+     * 获取版本描述
+     */
+    fun getVersionDescription(): String {
+        val sb = StringBuilder()
+        if (isForceUpdate) sb.append("[强制更新] ")
+        if (isImportant) sb.append("[重要] ")
+        sb.append("v$versionName")
+        return sb.toString()
+    }
+}
 
 /**
  * 版本历史记录

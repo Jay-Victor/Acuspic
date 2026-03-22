@@ -37,9 +37,9 @@ class UpdateManager(private val context: Context) {
     private var currentDownloadJob: kotlinx.coroutines.Job? = null
 
     companion object {
-        // 当前版本配置
-        const val CURRENT_VERSION_CODE = 1
-        const val CURRENT_VERSION_NAME = "1.0.0"
+        // 当前版本配置 - 必须与 build.gradle.kts 保持一致
+        const val CURRENT_VERSION_CODE = 3
+        const val CURRENT_VERSION_NAME = "1.0.2"
         
         // APK文件名（使用大写Apk避免微信/QQ添加.1后缀）
         fun getApkFileName(versionName: String = CURRENT_VERSION_NAME): String {

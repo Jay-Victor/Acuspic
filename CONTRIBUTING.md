@@ -377,6 +377,63 @@ git push origin feature/your-feature-name
    - 创建新版本前，先确认 `release/` 目录结构
    - 确保不会影响已存在的版本文件夹
 
+### 🚨 发布新版本操作清单（必须严格遵守）
+
+> **警告**: Gradle构建会清理 `release/` 目录下的文件，必须按以下步骤操作！
+
+**步骤1: 构建前备份**
+```powershell
+# 在构建前，备份所有旧版本文件夹到临时目录
+$tempBackup = "e:\MD Editor\temp_release_backup"
+New-Item -ItemType Directory -Path $tempBackup -Force
+Copy-Item -Path "e:\MD Editor\android\app\build\outputs\apk\release\v*" -Destination $tempBackup -Recurse -Force
+```
+
+**步骤2: 执行构建**
+```powershell
+cd "e:\MD Editor\android"
+.\gradlew.bat assembleRelease --no-daemon
+```
+
+**步骤3: 创建新版本文件夹并移动文件**
+```powershell
+# 只创建新版本文件夹，不触碰旧版本
+$newVersion = "v1.0.x"  # 替换为实际版本号
+$newDir = "e:\MD Editor\android\app\build\outputs\apk\release\$newVersion"
+New-Item -ItemType Directory -Path $newDir -Force
+Move-Item -Path "e:\MD Editor\android\app\build\outputs\apk\release\Acuspic-$newVersion.Apk" -Destination $newDir
+Move-Item -Path "e:\MD Editor\android\app\build\outputs\apk\release\output-metadata.json" -Destination $newDir
+```
+
+**步骤4: 恢复旧版本（如果被清理）**
+```powershell
+# 检查旧版本是否存在，不存在则从备份恢复
+if (-not (Test-Path "e:\MD Editor\android\app\build\outputs\apk\release\v1.0.0")) {
+    Copy-Item -Path "e:\MD Editor\temp_release_backup\v1.0.0" -Destination "e:\MD Editor\android\app\build\outputs\apk\release\" -Recurse -Force
+}
+# 对其他版本重复此检查...
+```
+
+**步骤5: 创建版本说明文档**
+```powershell
+# 在新版本文件夹中创建 .md 文件
+# 内容参考已有版本的格式
+```
+
+**步骤6: 清理临时备份**
+```powershell
+Remove-Item -Path "e:\MD Editor\temp_release_backup" -Recurse -Force
+```
+
+### 🔒 绝对禁止的操作
+
+| 禁止操作 | 后果 |
+|----------|------|
+| 删除旧版本文件夹 | 历史版本丢失 |
+| 移动旧版本文件 | 版本混乱 |
+| 覆盖旧版本APK | 无法回退 |
+| 在构建后不检查旧版本 | 可能丢失历史版本 |
+
 ### 示例目录结构
 
 ```
